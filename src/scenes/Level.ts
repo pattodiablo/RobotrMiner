@@ -18,7 +18,18 @@ import {
 	b2CreateBody,
 	b2DefaultBodyDef,
 	b2DefaultWorldDef,
+	b2CreatePolygonShape,
+	b2DefaultShapeDef,
+	b2ComputeHull,
+	b2MakeOffsetPolygon,
+	b2Transform,
+	b2MakeRot,
+	b2MakeBox,
+	b2DebugDraw as PhaserDebugDraw,
+	b2World_Draw,
+
 	b2Vec2,
+	pxm,
 	pxmVec2,
 	} from "../box2d.js";
 /* END-USER-IMPORTS */
@@ -63,6 +74,23 @@ export default class Level extends Phaser.Scene {
 
 		// add body to gema
 		AddSpriteToWorld(this.worldId, gema, { bodyId: body });
+
+		// shape
+		const shape = b2CreatePolygonShape(body, { 
+			...b2DefaultShapeDef()
+		}, b2MakeOffsetPolygon(b2ComputeHull([new b2Vec2(pxm(-43), pxm(-41)), new b2Vec2(pxm(43), pxm(-41)), new b2Vec2(pxm(43), pxm(41)), new b2Vec2(pxm(-43), pxm(41))], 4), pxm(0), new b2Transform(new b2Vec2(pxm(0), pxm(0)), b2MakeRot(0))));
+
+		// b2body_1
+		const b2body_1 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(494, -629)
+		});
+
+		// shape_1
+		const shape_1 = b2CreatePolygonShape(b2body_1, { 
+			...b2DefaultShapeDef(), 
+			restitution: 0.5
+		}, b2MakeBox(pxm(800), pxm(100)));
 
 		this.gema = gema;
 

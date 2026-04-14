@@ -10,7 +10,6 @@
         "compilerOutputLanguage": "TYPE_SCRIPT",
         "borderWidth": 1031,
         "borderHeight": 530,
-        "box2dDebugEditor": false,
         "box2dGenerateWorldCode": true,
         "box2dSceneGenerateUpdateCode": false
     },
@@ -57,7 +56,32 @@
                     "_type": 2,
                     "positionX": 337,
                     "positionY": -187,
-                    "gravityScale": 10
+                    "gravityScale": 10,
+                    "list": [
+                        {
+                            "type": "b2OffsetPolygonShape",
+                            "id": "58c5a235-e3fa-4a7e-8354-bd8b66e5d526",
+                            "label": "shape",
+                            "points": "-43 -41 43 -41 43 41 -43 41"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "b2Body",
+            "id": "9d118111-e47c-4144-9914-76cbccb9ccff",
+            "label": "b2body_1",
+            "positionX": 494,
+            "positionY": -629,
+            "list": [
+                {
+                    "type": "b2BoxShape",
+                    "id": "9c9e76fc-ec84-4757-ba52-0aa9d381e227",
+                    "label": "shape_1",
+                    "restitution": 0.5,
+                    "halfWidth": 800,
+                    "halfHeight": 100
                 }
             ]
         }
