@@ -1,0 +1,59 @@
+{
+    "id": "b685c081-ee5f-4b67-b583-415922c9e2c4",
+    "sceneType": "SCENE",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "preloadPackFiles": [],
+        "createMethodName": "editorCreate",
+        "sceneKey": "Level",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1031,
+        "borderHeight": 530,
+        "box2dDebugEditor": false,
+        "box2dSceneGenerateUpdateCode": false
+    },
+    "displayList": [
+        {
+            "type": "Image",
+            "id": "25bd8793-6137-4bf0-be98-e0351aafa21f",
+            "label": "background",
+            "texture": {
+                "key": "background"
+            },
+            "x": -40,
+            "y": -59,
+            "scaleX": 0.5427640102953456,
+            "scaleY": 0.5427640102953456,
+            "originX": 0,
+            "originY": 0
+        },
+        {
+            "type": "Image",
+            "id": "a14659df-93dc-4059-a993-6a0530c9c7a9",
+            "label": "playerBot",
+            "texture": {
+                "key": "PlayerBot"
+            },
+            "x": 583,
+            "y": 306
+        },
+        {
+            "type": "Image",
+            "id": "612ebe3e-e391-41e9-8361-27021f00da54",
+            "label": "gema",
+            "texture": {
+                "key": "gema"
+            },
+            "x": 180,
+            "y": 198
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}
