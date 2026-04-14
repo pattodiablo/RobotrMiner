@@ -1,7 +1,20 @@
 import Phaser from "./phaser";
 import Level from "./scenes/Level";
 import Preload from "./scenes/Preload";
+import {
+	AddSpriteToWorld,
+	CreateWorld,
+	DYNAMIC,
+	SetWorldScale,
+	UpdateWorldSprites,
+	WorldStep,
+	b2CreateBody,
+	b2DefaultBodyDef,
+	b2DefaultWorldDef,
+	pxmVec2,
+	} from "./box2d.js";
 
+	
 const preloadAssetPackUrl = new URL("../static/assets/preload-asset-pack.json", import.meta.url).toString();
 
 class Boot extends Phaser.Scene {
@@ -27,6 +40,10 @@ window.addEventListener('load', function () {
 		width: 1031,
 		height: 530,
 		backgroundColor: "#2f2f2f",
+	    physics: {
+        default: 'box2d'
+        
+    },
 		scale: {
 			mode: Phaser.Scale.ScaleModes.FIT,
 			autoCenter: Phaser.Scale.Center.CENTER_BOTH

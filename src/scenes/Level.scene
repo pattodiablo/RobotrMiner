@@ -11,6 +11,7 @@
         "borderWidth": 1031,
         "borderHeight": 530,
         "box2dDebugEditor": false,
+        "box2dGenerateWorldCode": true,
         "box2dSceneGenerateUpdateCode": false
     },
     "displayList": [
@@ -42,11 +43,23 @@
             "type": "Image",
             "id": "612ebe3e-e391-41e9-8361-27021f00da54",
             "label": "gema",
+            "scope": "CLASS",
             "texture": {
                 "key": "gema"
             },
-            "x": 180,
-            "y": 198
+            "x": 337,
+            "y": 187,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "c7c996c0-60ac-4ff6-884c-e9bdf360f13a",
+                    "label": "body",
+                    "_type": 2,
+                    "positionX": 337,
+                    "positionY": -187,
+                    "gravityScale": 10
+                }
+            ]
         }
     ],
     "plainObjects": [],
