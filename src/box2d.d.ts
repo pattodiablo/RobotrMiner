@@ -6,6 +6,7 @@ export type b2WorldId = {
 export const AddSpriteToWorld: any;
 export const RemoveSpriteFromWorld: any;
 export const CreateWorld: any;
+export const CreateDebugDraw: any;
 export const DYNAMIC: number;
 export const b2BodyType: {
 	b2_staticBody: 0;
@@ -20,6 +21,7 @@ export const b2CreateBody: any;
 export const b2DestroyBody: any;
 export const b2CreateCircleShape: any;
 export const b2DestroyShape: any;
+export const b2Shape_SetCircle: any;
 export const b2CreatePolygonShape: any;
 export const b2DefaultBodyDef: any;
 export const b2DefaultShapeDef: any;
@@ -34,6 +36,7 @@ export const b2Transform: any;
 export const b2Circle: any;
 export const b2Body_SetTransform: any;
 export const b2Body_GetPosition: any;
+export const b2Body_GetShapes: any;
 export const b2Body_SetLinearVelocity: any;
 export const b2Body_SetAngularVelocity: any;
 export const b2Body_GetLocalPoint: any;

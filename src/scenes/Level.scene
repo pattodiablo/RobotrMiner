@@ -29,18 +29,6 @@
             "originY": 0
         },
         {
-            "prefabId": "58331c2c-15d7-4a52-9bae-33f0e61aa9b2",
-            "id": "612ebe3e-e391-41e9-8361-27021f00da54",
-            "unlock": [
-                "x",
-                "y"
-            ],
-            "label": "gema",
-            "scope": "CLASS",
-            "x": 337,
-            "y": 187
-        },
-        {
             "type": "b2Body",
             "id": "9d118111-e47c-4144-9914-76cbccb9ccff",
             "label": "b2body_1",
@@ -72,17 +60,6 @@
             "y": 290,
             "scaleX": 0.6501425353183732,
             "scaleY": 0.6501425353183732
-        },
-        {
-            "prefabId": "50677ef5-f971-4157-b2f0-ac661d4306cc",
-            "id": "b094e43f-a885-4e74-8ae5-a9c7456151d2",
-            "unlock": [
-                "x",
-                "y"
-            ],
-            "label": "roca1",
-            "x": 414,
-            "y": 367
         }
     ],
     "plainObjects": [],

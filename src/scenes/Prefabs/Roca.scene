@@ -26,13 +26,15 @@
                     "type": "b2Body",
                     "id": "969f44fc-bcc6-4f37-ae1b-1a4d904eaeaf",
                     "label": "body_2",
-                    "_type": 1,
+                    "_type": 2,
+                    "linearDamping": 1,
                     "gravityScale": 10,
                     "list": [
                         {
                             "type": "b2CircleShape",
                             "id": "20d6c0ea-c2dd-469d-9bdf-c4e9bf2eb204",
-                            "label": "shape_3"
+                            "label": "shape_3",
+                            "radius": 70
                         }
                     ]
                 }

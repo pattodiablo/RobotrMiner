@@ -3,16 +3,19 @@
 
 /* START OF COMPILED CODE */
 
-import Gema from "./Prefabs/Gema";
 import Robot from "./Prefabs/Robot";
-import Roca from "./Prefabs/Roca";
 /* START-USER-IMPORTS */
+import Gema from "./Prefabs/Gema";
+import Roca from "./Prefabs/Roca";
+
+/* END-USER-IMPORTS */
 import Phaser from "../phaser";
 import type { b2WorldId } from "../box2d.js";
 import {
 
 	AddSpriteToWorld,
 	CreateWorld,
+	CreateDebugDraw,
 	DYNAMIC,
 	b2BodyType,
 	SetWorldScale,
@@ -64,10 +67,6 @@ export default class Level extends Phaser.Scene {
 		background.scaleY = 0.5427640102953456;
 		background.setOrigin(0, 0);
 
-		// gema
-		const gema = new Gema(this, 337, 187);
-		this.add.existing(gema);
-
 		// b2body_1
 		const b2body_1 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
@@ -86,11 +85,6 @@ export default class Level extends Phaser.Scene {
 		mainCharacter.scaleX = 0.6501425353183732;
 		mainCharacter.scaleY = 0.6501425353183732;
 
-		// roca1
-		const roca1 = new Roca(this, 414, 367);
-		this.add.existing(roca1);
-
-		this.gema = gema;
 		this.mainCharacter = mainCharacter;
 
 		this.events.emit("scene-awake");
@@ -102,7 +96,6 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
-	private gema!: Gema;
 	private mainCharacter!: Robot;
 	public worldId!: b2WorldId;
 
@@ -111,8 +104,36 @@ export default class Level extends Phaser.Scene {
 	// Write your code here
 	private gems: Gema[] = [];
 
-	private readonly gemSpawnMinDelay = 4000;
-	private readonly gemSpawnMaxDelay = 10000;
+	private readonly rockSpawnMinDelay = 4000;
+	private readonly rockSpawnMaxDelay = 10000;
+	private debugCanvas: HTMLCanvasElement | null = null;
+	private debugContext: CanvasRenderingContext2D | null = null;
+	private debugDraw: any = null;
+	private debugEnabled = false;
+	private debugToggleKey!: Phaser.Input.Keyboard.Key;
+	private createLevelBounds() {
+		const b2body = b2CreateBody(this.worldId, {
+			...b2DefaultBodyDef(),
+			position: pxmVec2(-102, -307),
+			rotation: b2MakeRot(Phaser.Math.DegToRad(90))
+		});
+
+		b2CreatePolygonShape(b2body, {
+			...b2DefaultShapeDef(),
+			restitution: 0.5
+		}, b2MakeBox(pxm(800), pxm(100)));
+
+		const b2body_2 = b2CreateBody(this.worldId, {
+			...b2DefaultBodyDef(),
+			position: pxmVec2(1142, -307),
+			rotation: b2MakeRot(Phaser.Math.DegToRad(90))
+		});
+
+		b2CreatePolygonShape(b2body_2, {
+			...b2DefaultShapeDef(),
+			restitution: 0.5
+		}, b2MakeBox(pxm(800), pxm(100)));
+	}
 	create() {
 		SetWorldScale(40);
 
@@ -122,11 +143,14 @@ export default class Level extends Phaser.Scene {
 		const world = CreateWorld({ worldDef });
 		this.worldId = world.worldId;
 		this.editorCreate();
+		this.createLevelBounds();
+		this.setupBox2DDebug();
 		this.mainCharacter.animationState.setAnimation(0, "idle", true);
 		this.events.on("robot-finished-gem-move", () => {
 			// Hook for when the robot reaches the gem-requested target.
 		});
-		this.scheduleNextGemSpawn();
+		this.scheduleNextRockSpawn();
+		this.debugToggleKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3);
 
 
 
@@ -134,18 +158,73 @@ export default class Level extends Phaser.Scene {
 	}
 
 	update(_time: number, delta: number) {
+		if (Phaser.Input.Keyboard.JustDown(this.debugToggleKey)) {
+			this.setBox2DDebugEnabled(!this.debugEnabled);
+		}
+
 		this.mainCharacter.updateMovement(delta);
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
 
+		if (this.debugEnabled && this.debugContext && this.debugCanvas && this.debugDraw) {
+			this.debugContext.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
+			b2World_Draw(this.worldId, this.debugDraw);
+		}
+
 	}
 
-	private spawnGem(x: number, y: number) {
-		const gem = new Gema(this, x, y);
-		this.add.existing(gem);
-		this.registerGem(gem);
-		return gem;
+	private setupBox2DDebug() {
+		const enabledFromUrl = new URLSearchParams(location.search).get("debugBox2D") === "1";
+		this.setBox2DDebugEnabled(enabledFromUrl);
+	}
+
+	private setBox2DDebugEnabled(enabled: boolean) {
+		this.debugEnabled = enabled;
+
+		if (!enabled) {
+			if (this.debugCanvas) {
+				this.debugCanvas.style.display = "none";
+			}
+			return;
+		}
+
+		if (!this.debugCanvas) {
+			this.debugCanvas = document.createElement("canvas");
+			this.debugCanvas.width = this.scale.width;
+			this.debugCanvas.height = this.scale.height;
+			this.debugCanvas.style.position = "absolute";
+			this.debugCanvas.style.left = "0";
+			this.debugCanvas.style.top = "0";
+			this.debugCanvas.style.width = "100%";
+			this.debugCanvas.style.height = "100%";
+			this.debugCanvas.style.pointerEvents = "none";
+			this.debugCanvas.style.zIndex = "20";
+			this.game.canvas.parentElement?.appendChild(this.debugCanvas);
+			this.debugContext = this.debugCanvas.getContext("2d");
+		}
+
+		if (this.debugCanvas) {
+			this.debugCanvas.style.display = "block";
+		}
+
+		if (!this.debugDraw) {
+			this.debugDraw = CreateDebugDraw(this.debugCanvas, this.debugContext, 40);
+			this.debugDraw.drawShapes = true;
+			this.debugDraw.drawJoints = true;
+			this.debugDraw.drawAABBs = false;
+			this.debugDraw.drawMass = false;
+			this.debugDraw.drawContacts = true;
+			this.debugDraw.drawContactNormals = false;
+			this.debugDraw.drawContactImpulses = false;
+			this.debugDraw.drawFrictionImpulses = false;
+		}
+	}
+
+	private spawnRock(x: number, y: number) {
+		const rock = new Roca(this, x, y);
+		this.add.existing(rock);
+		return rock;
 	}
 
 	public registerGem(gem: Gema) {
@@ -158,16 +237,15 @@ export default class Level extends Phaser.Scene {
 		this.gems = this.gems.filter((currentGem) => currentGem !== gem);
 	}
 
-	private scheduleNextGemSpawn() {
-		const delay = this.gemSpawnMinDelay + Math.random() * (this.gemSpawnMaxDelay - this.gemSpawnMinDelay);
+	private scheduleNextRockSpawn() {
+		const delay = this.rockSpawnMinDelay + Math.random() * (this.rockSpawnMaxDelay - this.rockSpawnMinDelay);
 		this.time.delayedCall(delay, () => {
 			const margin = 80;
 			const width = this.scale.width;
-			const height = this.scale.height;
-			const x = margin + Math.random() * Math.max(0, width - margin * 2);
-			const y = margin + Math.random() * Math.max(0, height - margin * 2);
-			this.spawnGem(x, y);
-			this.scheduleNextGemSpawn();
+			const x = -margin + Math.random() * (width + margin * 2);
+			const y = -margin - Math.random() * margin;
+			this.spawnRock(x, y);
+			this.scheduleNextRockSpawn();
 		});
 	}
 

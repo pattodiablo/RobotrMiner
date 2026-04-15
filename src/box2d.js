@@ -1,4 +1,5 @@
 import * as PhaserBox2D from "phaser-box2d/dist/PhaserBox2D.js";
+import * as PhaserBox2DDebug from "phaser-box2d/dist/PhaserBox2D-Debug.js";
 
 export const {
 	AddSpriteToWorld,
@@ -13,6 +14,7 @@ export const {
 	b2DestroyBody,
 	b2CreateCircleShape,
 	b2DestroyShape,
+	b2Shape_SetCircle,
 	b2CreatePolygonShape,
 	b2DefaultBodyDef,
 	b2DefaultShapeDef,
@@ -27,6 +29,7 @@ export const {
 	b2Circle,
 	b2Body_SetTransform,
 	b2Body_GetPosition,
+	b2Body_GetShapes,
 	b2Body_SetLinearVelocity,
 	b2Body_SetAngularVelocity,
 	b2Body_GetLocalPoint,
@@ -38,3 +41,5 @@ export const {
 	pxmVec2,
 	b2World_Draw,
 } = PhaserBox2D;
+
+export const { CreateDebugDraw } = PhaserBox2DDebug;
