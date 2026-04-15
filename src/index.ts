@@ -13,8 +13,8 @@ import {
 	b2DefaultWorldDef,
 	pxmVec2,
 	} from "./box2d.js";
+import { SpinePlugin } from "@esotericsoftware/spine-phaser";
 
-	
 const preloadAssetPackUrl = new URL("../static/assets/preload-asset-pack.json", import.meta.url).toString();
 
 class Boot extends Phaser.Scene {
@@ -35,19 +35,24 @@ class Boot extends Phaser.Scene {
 }
 
 window.addEventListener('load', function () {
-	
 	const game = new Phaser.Game({
 		width: 1031,
 		height: 530,
-		backgroundColor: "#2f2f2f",
+		backgroundColor: "#2f2f2f", antialias: true,           // puedes dejarlo en true
+		scale: {
+			mode: Phaser.Scale.ScaleModes.FIT,
+			autoCenter: Phaser.Scale.Center.CENTER_BOTH
+		},plugins: { 
+            scene: [{
+                key: "spine.SpinePlugin",
+                plugin: SpinePlugin,
+                mapping: "spine"
+            }]
+        },
 	    physics: {
         default: 'box2d'
         
     },
-		scale: {
-			mode: Phaser.Scale.ScaleModes.FIT,
-			autoCenter: Phaser.Scale.Center.CENTER_BOTH
-		},
 		scene: [Boot, Preload, Level]
 	});
 

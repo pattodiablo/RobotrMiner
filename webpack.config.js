@@ -44,6 +44,9 @@ module.exports = {
         ],
     },
     resolve: {
+        alias: {
+            phaser: path.resolve(__dirname, "node_modules/phaser/dist/phaser.js"),
+        },
         extensions: [".tsx", ".ts", ".js"],
     },
     devServer: {

@@ -3,6 +3,8 @@
 
 /* START OF COMPILED CODE */
 
+import Gema from "./Prefabs/Gema";
+import Robot from "./Prefabs/Robot";
 /* START-USER-IMPORTS */
 import Phaser from "../phaser";
 import type { b2WorldId } from "../box2d.js";
@@ -32,6 +34,7 @@ import {
 	pxm,
 	pxmVec2,
 	} from "../box2d.js";
+
 /* END-USER-IMPORTS */
 
 export default class Level extends Phaser.Scene {
@@ -58,27 +61,9 @@ export default class Level extends Phaser.Scene {
 		background.scaleY = 0.5427640102953456;
 		background.setOrigin(0, 0);
 
-		// playerBot
-		this.add.image(583, 306, "PlayerBot");
-
 		// gema
-		const gema = this.add.image(337, 187, "gema");
-
-		// body
-		const body = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			type: b2BodyType.b2_dynamicBody, 
-			position: pxmVec2(337, -187), 
-			gravityScale: 10
-		});
-
-		// add body to gema
-		AddSpriteToWorld(this.worldId, gema, { bodyId: body });
-
-		// shape
-		const shape = b2CreatePolygonShape(body, { 
-			...b2DefaultShapeDef()
-		}, b2MakeOffsetPolygon(b2ComputeHull([new b2Vec2(pxm(-43), pxm(-41)), new b2Vec2(pxm(43), pxm(-41)), new b2Vec2(pxm(43), pxm(41)), new b2Vec2(pxm(-43), pxm(41))], 4), pxm(0), new b2Transform(new b2Vec2(pxm(0), pxm(0)), b2MakeRot(0))));
+		const gema = new Gema(this, 337, 187);
+		this.add.existing(gema);
 
 		// b2body_1
 		const b2body_1 = b2CreateBody(this.worldId, { 
@@ -92,7 +77,14 @@ export default class Level extends Phaser.Scene {
 			restitution: 0.5
 		}, b2MakeBox(pxm(800), pxm(100)));
 
+		// mainCharacter
+		const mainCharacter = new Robot(this, this.spine, 718, 290);
+		this.add.existing(mainCharacter);
+		mainCharacter.scaleX = 0.6501425353183732;
+		mainCharacter.scaleY = 0.6501425353183732;
+
 		this.gema = gema;
+		this.mainCharacter = mainCharacter;
 
 		this.events.emit("scene-awake");
 	}
@@ -103,7 +95,8 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
-	private gema!: Phaser.GameObjects.Image;
+	private gema!: Gema;
+	private mainCharacter!: Robot;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -119,7 +112,11 @@ export default class Level extends Phaser.Scene {
 		const world = CreateWorld({ worldDef });
 		this.worldId = world.worldId;
 		this.editorCreate();
-
+		this.mainCharacter.animationState.setAnimation(0, "idle", true);
+		this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+			const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+			//this.mainCharacter.moveTo(worldPoint.x, worldPoint.y);
+		});
 
 
 
@@ -127,6 +124,7 @@ export default class Level extends Phaser.Scene {
 	}
 
 	update(_time: number, delta: number) {
+		this.mainCharacter.updateMovement(delta);
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		UpdateWorldSprites(this.worldId);
 

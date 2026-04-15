@@ -11,6 +11,8 @@
   "author": "Phaser Editor 2D <developers@phasereditor2d.com> (https://phasereditor2d.com/)",
   "license": "MIT",
   "dependencies": {
+    "@esotericsoftware/spine-phaser": "npm:@esotericsoftware/spine-phaser-v4@^4.2.110",
+    "@esotericsoftware/spine-phaser-v4": "^4.2.110",
     "@phaserjs/editor-scripts-base": "^2.0.1",
     "phaser": "^4.0.0-rc.6",
     "phaser-box2d": "^1.1.0"

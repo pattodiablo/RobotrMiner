@@ -12,6 +12,17 @@
                 "key": "gema"
             },
             {
+                "url": "assets/SpinePlayer/mainCharacter.json",
+                "type": "spineJson",
+                "key": "mainCharacter",
+                "previewAtlasKey": "mainCharacter-atlas"
+            },
+            {
+                "url": "assets/SpinePlayer/mainCharacter.atlas",
+                "type": "spineAtlas",
+                "key": "mainCharacter-atlas"
+            },
+            {
                 "url": "assets/images/PlayerBot.png",
                 "type": "image",
                 "key": "PlayerBot"

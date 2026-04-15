@@ -1,0 +1,44 @@
+{
+    "id": "adb2fc71-0b24-47de-9b60-ab9674980afd",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1031,
+        "borderHeight": 530,
+        "box2dGenerateWorldCode": true
+    },
+    "displayList": [
+        {
+            "type": "SpineGameObject",
+            "id": "c6ed3a3d-5758-4e43-a01a-8e1df8995936",
+            "label": "mainCharacter",
+            "scope": "CLASS",
+            "dataKey": "mainCharacter",
+            "atlasKey": "mainCharacter-atlas",
+            "skinName": "default",
+            "bpType": 1,
+            "bpAnimation": "idle",
+            "previewAnimation": "",
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "f35909e4-34b6-48f7-84d3-67689634db23",
+                    "label": "body_1",
+                    "_type": 1
+                }
+            ]
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}
