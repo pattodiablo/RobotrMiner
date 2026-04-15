@@ -5,6 +5,7 @@
 
 import Gema from "./Prefabs/Gema";
 import Robot from "./Prefabs/Robot";
+import Roca from "./Prefabs/Roca";
 /* START-USER-IMPORTS */
 import Phaser from "../phaser";
 import type { b2WorldId } from "../box2d.js";
@@ -18,6 +19,8 @@ import {
 	UpdateWorldSprites,
 	WorldStep,
 	b2CreateBody,
+	b2CreateCircleShape,
+	b2Circle,
 	b2DefaultBodyDef,
 	b2DefaultWorldDef,
 	b2CreatePolygonShape,
@@ -83,7 +86,11 @@ export default class Level extends Phaser.Scene {
 		mainCharacter.scaleX = 0.6501425353183732;
 		mainCharacter.scaleY = 0.6501425353183732;
 
-		this.gems.push(gema);
+		// roca1
+		const roca1 = new Roca(this, 414, 367);
+		this.add.existing(roca1);
+
+		this.gema = gema;
 		this.mainCharacter = mainCharacter;
 
 		this.events.emit("scene-awake");
@@ -95,16 +102,17 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
-	private gems: Gema[] = [];
+	private gema!: Gema;
 	private mainCharacter!: Robot;
 	public worldId!: b2WorldId;
-	private readonly gemSpawnMinDelay = 4000;
-	private readonly gemSpawnMaxDelay = 10000;
 
 	/* START-USER-CODE */
 
 	// Write your code here
+	private gems: Gema[] = [];
 
+	private readonly gemSpawnMinDelay = 4000;
+	private readonly gemSpawnMaxDelay = 10000;
 	create() {
 		SetWorldScale(40);
 
@@ -133,13 +141,21 @@ export default class Level extends Phaser.Scene {
 
 	}
 
-	/* END-USER-CODE */
-
 	private spawnGem(x: number, y: number) {
 		const gem = new Gema(this, x, y);
 		this.add.existing(gem);
-		this.gems.push(gem);
+		this.registerGem(gem);
 		return gem;
+	}
+
+	public registerGem(gem: Gema) {
+		if (!this.gems.includes(gem)) {
+			this.gems.push(gem);
+		}
+	}
+
+	public unregisterGem(gem: Gema) {
+		this.gems = this.gems.filter((currentGem) => currentGem !== gem);
 	}
 
 	private scheduleNextGemSpawn() {
@@ -154,6 +170,8 @@ export default class Level extends Phaser.Scene {
 			this.scheduleNextGemSpawn();
 		});
 	}
+
+	/* END-USER-CODE */
 }
 
 /* END OF COMPILED CODE */

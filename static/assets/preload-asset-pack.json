@@ -26,6 +26,11 @@
                 "url": "assets/images/PlayerBot.png",
                 "type": "image",
                 "key": "PlayerBot"
+            },
+            {
+                "url": "assets/images/roca1.png",
+                "type": "image",
+                "key": "roca1"
             }
         ]
     },

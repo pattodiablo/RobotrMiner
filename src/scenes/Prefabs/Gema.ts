@@ -106,6 +106,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 		this.destroyed = true;
 		this.held = false;
 		this.heldRobotBodyId = null;
+		(this.scene as any).unregisterGem?.(this);
 		RemoveSpriteFromWorld((this.scene as any).worldId, this, false);
 		if (this.bodyId) {
 			b2DestroyBody(this.bodyId);
