@@ -12,6 +12,7 @@ export const {
 	b2CreateBody,
 	b2DestroyBody,
 	b2CreateCircleShape,
+	b2DestroyShape,
 	b2CreatePolygonShape,
 	b2DefaultBodyDef,
 	b2DefaultShapeDef,

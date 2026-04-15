@@ -19,6 +19,7 @@ export const WorldStep: any;
 export const b2CreateBody: any;
 export const b2DestroyBody: any;
 export const b2CreateCircleShape: any;
+export const b2DestroyShape: any;
 export const b2CreatePolygonShape: any;
 export const b2DefaultBodyDef: any;
 export const b2DefaultShapeDef: any;
