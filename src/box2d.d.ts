@@ -4,6 +4,7 @@ export type b2WorldId = {
 };
 
 export const AddSpriteToWorld: any;
+export const RemoveSpriteFromWorld: any;
 export const CreateWorld: any;
 export const DYNAMIC: number;
 export const b2BodyType: {
@@ -16,10 +17,12 @@ export const SetWorldScale: any;
 export const UpdateWorldSprites: any;
 export const WorldStep: any;
 export const b2CreateBody: any;
+export const b2DestroyBody: any;
 export const b2CreatePolygonShape: any;
 export const b2DefaultBodyDef: any;
 export const b2DefaultShapeDef: any;
 export const b2DefaultWorldDef: any;
+export const b2DefaultWeldJointDef: any;
 export const b2ComputeHull: any;
 export const b2MakeOffsetPolygon: any;
 export const b2MakeRot: any;
@@ -29,6 +32,11 @@ export const b2Transform: any;
 export const b2Body_SetTransform: any;
 export const b2Body_GetPosition: any;
 export const b2Body_SetLinearVelocity: any;
+export const b2Body_SetAngularVelocity: any;
+export const b2Body_GetLocalPoint: any;
+export const b2Body_SetType: any;
+export const b2CreateWeldJoint: any;
+export const b2DestroyJoint: any;
 export const b2Vec2: any;
 export const pxm: any;
 export const pxmVec2: any;

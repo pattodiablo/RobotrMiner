@@ -24,12 +24,16 @@
             "bpType": 1,
             "bpAnimation": "idle",
             "previewAnimation": "",
+            "x": 20,
+            "y": -6,
             "list": [
                 {
                     "type": "b2Body",
                     "id": "f35909e4-34b6-48f7-84d3-67689634db23",
                     "label": "body_1",
-                    "_type": 1
+                    "_type": 1,
+                    "positionX": 20,
+                    "positionY": 6
                 }
             ]
         }

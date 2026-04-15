@@ -83,7 +83,7 @@ export default class Level extends Phaser.Scene {
 		mainCharacter.scaleX = 0.6501425353183732;
 		mainCharacter.scaleY = 0.6501425353183732;
 
-		this.gema = gema;
+		this.gems.push(gema);
 		this.mainCharacter = mainCharacter;
 
 		this.events.emit("scene-awake");
@@ -95,9 +95,11 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
-	private gema!: Gema;
+	private gems: Gema[] = [];
 	private mainCharacter!: Robot;
 	public worldId!: b2WorldId;
+	private readonly gemSpawnMinDelay = 4000;
+	private readonly gemSpawnMaxDelay = 10000;
 
 	/* START-USER-CODE */
 
@@ -113,10 +115,10 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 		this.editorCreate();
 		this.mainCharacter.animationState.setAnimation(0, "idle", true);
-		this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-			const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-			//this.mainCharacter.moveTo(worldPoint.x, worldPoint.y);
+		this.events.on("robot-finished-gem-move", () => {
+			// Hook for when the robot reaches the gem-requested target.
 		});
+		this.scheduleNextGemSpawn();
 
 
 
@@ -126,11 +128,32 @@ export default class Level extends Phaser.Scene {
 	update(_time: number, delta: number) {
 		this.mainCharacter.updateMovement(delta);
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
+		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
 
 	}
 
 	/* END-USER-CODE */
+
+	private spawnGem(x: number, y: number) {
+		const gem = new Gema(this, x, y);
+		this.add.existing(gem);
+		this.gems.push(gem);
+		return gem;
+	}
+
+	private scheduleNextGemSpawn() {
+		const delay = this.gemSpawnMinDelay + Math.random() * (this.gemSpawnMaxDelay - this.gemSpawnMinDelay);
+		this.time.delayedCall(delay, () => {
+			const margin = 80;
+			const width = this.scale.width;
+			const height = this.scale.height;
+			const x = margin + Math.random() * Math.max(0, width - margin * 2);
+			const y = margin + Math.random() * Math.max(0, height - margin * 2);
+			this.spawnGem(x, y);
+			this.scheduleNextGemSpawn();
+		});
+	}
 }
 
 /* END OF COMPILED CODE */

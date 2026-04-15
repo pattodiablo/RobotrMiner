@@ -8,6 +8,7 @@ import type { b2WorldId } from "../../box2d.js";
 import {
 
 	AddSpriteToWorld,
+	RemoveSpriteFromWorld,
 	CreateWorld,
 	DYNAMIC,
 	b2BodyType,
@@ -15,6 +16,7 @@ import {
 	UpdateWorldSprites,
 	WorldStep,
 	b2CreateBody,
+	b2DestroyBody,
 	b2DefaultBodyDef,
 	b2DefaultWorldDef,
 	b2CreatePolygonShape,
@@ -29,6 +31,7 @@ import {
 	b2Body_SetTransform,
 	b2Body_GetPosition,
 	b2Body_SetLinearVelocity,
+	b2Body_SetAngularVelocity,
 
 	b2Vec2,
 	pxm,
@@ -42,7 +45,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 		super(scene, x ?? 0, y ?? 0, texture || "gema", frame);
 		this.setInteractive({ useHandCursor: true });
 		this.on("pointerdown", () => {
-			this.scene.events.emit("gema-clicked", this.x, this.y);
+			this.scene.events.emit("gema-clicked", this, this.x, this.y);
 		});
 
 		// body
@@ -55,6 +58,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 		// add body to this
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body });
+		this.bodyId = body;
 
 		// shape
 		const shape = b2CreatePolygonShape(body, { 
@@ -69,6 +73,46 @@ export default class Gema extends Phaser.GameObjects.Image {
 	/* START-USER-CODE */
 
 	// Write your code here.
+	private bodyId!: any;
+	private held = false;
+	private heldRobotBodyId: any = null;
+	private destroyed = false;
+
+	beginHold(robotBodyId: any) {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.held = true;
+		this.heldRobotBodyId = robotBodyId;
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+	}
+
+	updateHold() {
+		if (this.destroyed || !this.heldRobotBodyId || !this.bodyId) {
+			return;
+		}
+
+		const robotPosition = b2Body_GetPosition(this.heldRobotBodyId);
+		b2Body_SetTransform(this.bodyId, new b2Vec2(robotPosition.x, robotPosition.y - pxm(120)), b2MakeRot(0));
+	}
+
+	destroyGem() {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.destroyed = true;
+		this.held = false;
+		this.heldRobotBodyId = null;
+		RemoveSpriteFromWorld((this.scene as any).worldId, this, false);
+		if (this.bodyId) {
+			b2DestroyBody(this.bodyId);
+			this.bodyId = null;
+		}
+		super.destroy();
+	}
 
 	/* END-USER-CODE */
 }
