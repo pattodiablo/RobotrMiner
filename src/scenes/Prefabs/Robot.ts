@@ -110,10 +110,58 @@ export default class Robot extends SpineGameObject {
 			return;
 		}
 
+		this.startGemPickup(gem, x, y);
+	};
+
+	private startGemPickup(gem: any, x?: number, y?: number) {
+		if (this.isGrabbing || this.isHolding || this.isLifting || this.isReturning) {
+			return;
+		}
+
+		if (!gem) {
+			return;
+		}
+
 		this.isGrabbing = true;
 		this.heldGem = gem;
-		this.moveTo(x, y-100);
-	};
+		this.moveTo(x ?? gem.x, (y ?? gem.y) - 100);
+	}
+
+	private tryAutoAcquireNearestGem() {
+		if (this.isGrabbing || this.isHolding || this.isLifting || this.isReturning) {
+			return false;
+		}
+
+		const gems = (this.scene as any).gems as any[] | undefined;
+		if (!gems || gems.length === 0) {
+			return false;
+		}
+
+		const currentPosition = b2Body_GetPosition(this.bodyId);
+		let nearestGem: any = null;
+		let nearestDistance = Number.POSITIVE_INFINITY;
+
+		for (const gem of gems) {
+			if (!gem || gem.destroyed || !gem.bodyId) {
+				continue;
+			}
+
+			const deltaX = gem.x - currentPosition.x;
+			const deltaY = gem.y - currentPosition.y;
+			const distance = deltaX * deltaX + deltaY * deltaY;
+			if (distance < nearestDistance) {
+				nearestDistance = distance;
+				nearestGem = gem;
+			}
+		}
+
+		if (!nearestGem) {
+			return false;
+		}
+
+		this.startGemPickup(nearestGem);
+		return true;
+	}
 
 	moveTo(x: number, y: number) {
 		const currentPosition = b2Body_GetPosition(this.bodyId);
@@ -134,6 +182,10 @@ export default class Robot extends SpineGameObject {
 
 	updateMovement(delta: number) {
 		if (!this.isGrabbing && !this.isHolding && !this.isLifting && !this.isReturning) {
+			if (this.tryAutoAcquireNearestGem()) {
+				return;
+			}
+
 			this.updateIdleWander(delta);
 			return;
 		}

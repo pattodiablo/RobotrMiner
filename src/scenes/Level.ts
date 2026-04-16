@@ -7,8 +7,6 @@ import Robot from "./Prefabs/Robot";
 /* START-USER-IMPORTS */
 import Gema from "./Prefabs/Gema";
 import Roca from "./Prefabs/Roca";
-
-/* END-USER-IMPORTS */
 import Phaser from "../phaser";
 import type { b2WorldId } from "../box2d.js";
 import {
@@ -34,6 +32,7 @@ import {
 	b2MakeRot,
 	b2MakeBox,
 	b2DebugDraw as PhaserDebugDraw,
+	b2World_GetContactEvents,
 	b2World_Draw,
 
 	b2Vec2,
@@ -67,14 +66,14 @@ export default class Level extends Phaser.Scene {
 		background.scaleY = 0.5427640102953456;
 		background.setOrigin(0, 0);
 
-		// b2body_1
-		const b2body_1 = b2CreateBody(this.worldId, { 
+		// piso
+		const piso = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
 			position: pxmVec2(494, -629)
 		});
 
 		// shape_1
-		const shape_1 = b2CreatePolygonShape(b2body_1, { 
+		const shape_1 = b2CreatePolygonShape(piso, { 
 			...b2DefaultShapeDef(), 
 			restitution: 0.5
 		}, b2MakeBox(pxm(800), pxm(100)));
@@ -84,6 +83,30 @@ export default class Level extends Phaser.Scene {
 		this.add.existing(mainCharacter);
 		mainCharacter.scaleX = 0.6501425353183732;
 		mainCharacter.scaleY = 0.6501425353183732;
+
+		// pared1
+		const pared1 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(-100, -246)
+		});
+
+		// shape
+		const shape = b2CreatePolygonShape(pared1, { 
+			...b2DefaultShapeDef(), 
+			restitution: 0.5
+		}, b2MakeBox(pxm(100), pxm(600)));
+
+		// pared
+		const pared = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(1139, -246)
+		});
+
+		// shape_2
+		const shape_2 = b2CreatePolygonShape(pared, { 
+			...b2DefaultShapeDef(), 
+			restitution: 0.5
+		}, b2MakeBox(pxm(100), pxm(600)));
 
 		this.mainCharacter = mainCharacter;
 
@@ -164,6 +187,8 @@ export default class Level extends Phaser.Scene {
 
 		this.mainCharacter.updateMovement(delta);
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
+		this.handleGemMerges();
+		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
 
@@ -235,6 +260,131 @@ export default class Level extends Phaser.Scene {
 
 	public unregisterGem(gem: Gema) {
 		this.gems = this.gems.filter((currentGem) => currentGem !== gem);
+	}
+
+	private handleGemMerges() {
+		const contactEvents = b2World_GetContactEvents(this.worldId);
+		if (!contactEvents.beginEvents || contactEvents.beginCount === 0) {
+			return;
+		}
+
+		for (let index = 0; index < contactEvents.beginCount; index += 1) {
+			const contact = contactEvents.beginEvents[index];
+			const gemA = this.findGemByShapeId(contact.shapeIdA);
+			const gemB = this.findGemByShapeId(contact.shapeIdB);
+
+			if (!gemA || !gemB || gemA === gemB) {
+				continue;
+			}
+
+			if (gemA.getBirthType() !== gemB.getBirthType()) {
+				continue;
+			}
+
+			this.mergeGems(gemA, gemB);
+		}
+	}
+
+	private handleRockImpacts() {
+		const contactEvents = b2World_GetContactEvents(this.worldId);
+		if (!contactEvents.beginEvents || contactEvents.beginCount === 0) {
+			return;
+		}
+
+		const contactedRocks = new Set<Roca>();
+
+		for (let index = 0; index < contactEvents.beginCount; index += 1) {
+			const contact = contactEvents.beginEvents[index];
+			const rockA = this.findRockByShapeId(contact.shapeIdA);
+			const rockB = this.findRockByShapeId(contact.shapeIdB);
+
+			if (!rockA || !rockB || rockA === rockB) {
+				continue;
+			}
+
+			if (rockA.canBreakFromCollision()) {
+				rockA.breakFromCollision();
+			}
+
+			if (rockB.canBreakFromCollision()) {
+				rockB.breakFromCollision();
+			}
+
+			contactedRocks.add(rockA);
+			contactedRocks.add(rockB);
+		}
+
+		for (let index = 0; index < contactEvents.beginCount; index += 1) {
+			const contact = contactEvents.beginEvents[index];
+			const rockA = this.findRockByShapeId(contact.shapeIdA);
+			const rockB = this.findRockByShapeId(contact.shapeIdB);
+
+			if (rockA && rockB) {
+				continue;
+			}
+
+			const rock = rockA || rockB;
+			if (!rock || contactedRocks.has(rock)) {
+				continue;
+			}
+
+			rock.disarmCollisionBreak();
+		}
+	}
+
+	private findGemByShapeId(shapeId: any) {
+		for (const gem of this.gems) {
+			const gemShapeId = gem.getShapeId();
+			if (gemShapeId && this.sameShapeId(gemShapeId, shapeId)) {
+				return gem;
+			}
+		}
+
+		return null;
+	}
+
+	private findRockByShapeId(shapeId: any) {
+		for (const object of this.children.list) {
+			if (!(object instanceof Roca)) {
+				continue;
+			}
+
+			const rockShapeId = object.getShapeId?.();
+			if (rockShapeId && this.sameShapeId(rockShapeId, shapeId)) {
+				return object;
+			}
+		}
+
+		return null;
+	}
+
+	private sameShapeId(a: any, b: any) {
+		if (a === b) {
+			return true;
+		}
+
+		if (!a || !b) {
+			return false;
+		}
+
+		return a.index1 === b.index1 && a.revision === b.revision;
+	}
+
+	private mergeGems(gemA: Gema, gemB: Gema) {
+		const mergedX = (gemA.x + gemB.x) / 2;
+		const mergedY = (gemA.y + gemB.y) / 2;
+		const textureKey = gemA.getNextBirthTextureKey();
+
+		if (!textureKey) {
+			return;
+		}
+
+		gemA.destroyGem();
+		gemB.destroyGem();
+
+		const mergedGem = new Gema(this, mergedX, mergedY, textureKey);
+		this.add.existing(mergedGem);
+		this.registerGem(mergedGem);
 	}
 
 	private scheduleNextRockSpawn() {

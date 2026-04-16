@@ -7,9 +7,89 @@
                 "key": "background"
             },
             {
+                "url": "assets/images/gem1.png",
+                "type": "image",
+                "key": "gem1"
+            },
+            {
+                "url": "assets/images/gem10.png",
+                "type": "image",
+                "key": "gem10"
+            },
+            {
+                "url": "assets/images/gem11.png",
+                "type": "image",
+                "key": "gem11"
+            },
+            {
+                "url": "assets/images/gem13.png",
+                "type": "image",
+                "key": "gem13"
+            },
+            {
+                "url": "assets/images/gem14.png",
+                "type": "image",
+                "key": "gem14"
+            },
+            {
+                "url": "assets/images/gem2.png",
+                "type": "image",
+                "key": "gem2"
+            },
+            {
+                "url": "assets/images/gem3.png",
+                "type": "image",
+                "key": "gem3"
+            },
+            {
+                "url": "assets/images/gem4.png",
+                "type": "image",
+                "key": "gem4"
+            },
+            {
+                "url": "assets/images/gem5.png",
+                "type": "image",
+                "key": "gem5"
+            },
+            {
+                "url": "assets/images/gem6.png",
+                "type": "image",
+                "key": "gem6"
+            },
+            {
+                "url": "assets/images/gem7.png",
+                "type": "image",
+                "key": "gem7"
+            },
+            {
+                "url": "assets/images/gem8.png",
+                "type": "image",
+                "key": "gem8"
+            },
+            {
+                "url": "assets/images/gem9.png",
+                "type": "image",
+                "key": "gem9"
+            },
+            {
                 "url": "assets/images/gema.png",
                 "type": "image",
-                "key": "gema"
+                "key": "gema1"
+            },
+            {
+                "url": "assets/images/gema2.png",
+                "type": "image",
+                "key": "gema2"
+            },
+            {
+                "url": "assets/images/gema3.png",
+                "type": "image",
+                "key": "gema3"
+            },
+            {
+                "url": "assets/images/gema4.png",
+                "type": "image",
+                "key": "gema4"
             },
             {
                 "url": "assets/SpinePlayer/mainCharacter.json",

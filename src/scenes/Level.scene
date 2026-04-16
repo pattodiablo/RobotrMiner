@@ -31,7 +31,7 @@
         {
             "type": "b2Body",
             "id": "9d118111-e47c-4144-9914-76cbccb9ccff",
-            "label": "b2body_1",
+            "label": "piso",
             "positionX": 494,
             "positionY": -629,
             "list": [
@@ -60,6 +60,40 @@
             "y": 290,
             "scaleX": 0.6501425353183732,
             "scaleY": 0.6501425353183732
+        },
+        {
+            "type": "b2Body",
+            "id": "d0acca49-6823-4e3c-8f42-8cc177e5840d",
+            "label": "pared1",
+            "positionX": -100,
+            "positionY": -246,
+            "list": [
+                {
+                    "type": "b2BoxShape",
+                    "id": "e6c7b391-e619-4511-a5e5-4891b6a5b36e",
+                    "label": "shape",
+                    "restitution": 0.5,
+                    "halfWidth": 100,
+                    "halfHeight": 600
+                }
+            ]
+        },
+        {
+            "type": "b2Body",
+            "id": "7bfa4976-d1ac-4745-a6ac-3d1e03fa66d8",
+            "label": "pared",
+            "positionX": 1139,
+            "positionY": -246,
+            "list": [
+                {
+                    "type": "b2BoxShape",
+                    "id": "be2be1a1-a4de-4dca-ad8e-9e6aa57f0f14",
+                    "label": "shape_2",
+                    "restitution": 0.5,
+                    "halfWidth": 100,
+                    "halfHeight": 600
+                }
+            ]
         }
     ],
     "plainObjects": [],

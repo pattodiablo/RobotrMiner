@@ -6,7 +6,6 @@
 /* START-USER-IMPORTS */
 import type { b2WorldId } from "../../box2d.js";
 import {
-
 	AddSpriteToWorld,
 	RemoveSpriteFromWorld,
 	CreateWorld,
@@ -32,6 +31,7 @@ import {
 	b2Body_GetPosition,
 	b2Body_SetLinearVelocity,
 	b2Body_SetAngularVelocity,
+	b2Shape_EnableContactEvents,
 
 	b2Vec2,
 	pxm,
@@ -39,14 +39,32 @@ import {
 	} from "../../box2d.js";
 /* END-USER-IMPORTS */
 
+const BIRTH_TEXTURE_KEYS = [
+	"gem1",
+	"gem2",
+	"gem3",
+	"gem4",
+	"gem5",
+	"gem6",
+	"gem7",
+	"gem8",
+	"gem9",
+	"gem10",
+	"gem11",
+	"gem12",
+	"gem13",
+	"gem14",
+] as const;
+
+function getRandomBirthTextureKey() {
+	return BIRTH_TEXTURE_KEYS[Math.floor(Math.random() * BIRTH_TEXTURE_KEYS.length)];
+}
+
 export default class Gema extends Phaser.GameObjects.Image {
 
 	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string) {
-		super(scene, x ?? 0, y ?? 0, texture || "gema", frame);
-		this.setInteractive({ useHandCursor: true });
-		this.on("pointerdown", () => {
-			this.scene.events.emit("gema-clicked", this, this.x, this.y);
-		});
+		const birthTextureKey = texture || "gem1";
+		super(scene, x ?? 0, y ?? 0, birthTextureKey, frame);
 
 		// body
 		const body = b2CreateBody((this.scene as any).worldId, { 
@@ -63,10 +81,18 @@ export default class Gema extends Phaser.GameObjects.Image {
 		// shape
 		const shape = b2CreatePolygonShape(body, { 
 			...b2DefaultShapeDef()
-		}, b2MakeOffsetPolygon(b2ComputeHull([new b2Vec2(pxm(-43), pxm(-41)), new b2Vec2(pxm(43), pxm(-41)), new b2Vec2(pxm(43), pxm(41)), new b2Vec2(pxm(-43), pxm(41))], 4), pxm(0), new b2Transform(new b2Vec2(pxm(0), pxm(0)), b2MakeRot(0))));
+		}, b2MakeOffsetPolygon(b2ComputeHull(this.createCollisionPoints(), 4), pxm(0), new b2Transform(new b2Vec2(pxm(0), pxm(0)), b2MakeRot(0))));
+		this.shapeId = shape;
+		b2Shape_EnableContactEvents(this.shapeId, true);
 
 		/* START-USER-CTR-CODE */
 		// Write your code here.
+		this.setInteractive({ useHandCursor: true });
+		this.on("pointerdown", () => {
+			this.scene.events.emit("gema-clicked", this, this.x, this.y);
+		});
+		this.birthTextureKey = birthTextureKey;
+		this.birthType = BIRTH_TEXTURE_KEYS.indexOf(birthTextureKey as typeof BIRTH_TEXTURE_KEYS[number]) + 1;
 		/* END-USER-CTR-CODE */
 	}
 
@@ -74,9 +100,33 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 	// Write your code here.
 	private bodyId!: any;
+	private shapeId!: any;
+	private birthTextureKey!: string;
+	private birthType!: number;
 	private held = false;
 	private heldRobotBodyId: any = null;
 	private destroyed = false;
+
+	getBirthType() {
+		return this.birthType;
+	}
+
+	getBirthTextureKey() {
+		return this.birthTextureKey;
+	}
+
+	getShapeId() {
+		return this.shapeId;
+	}
+
+	getNextBirthTextureKey() {
+		const currentIndex = BIRTH_TEXTURE_KEYS.indexOf(this.birthTextureKey as typeof BIRTH_TEXTURE_KEYS[number]);
+		if (currentIndex < 0 || currentIndex >= BIRTH_TEXTURE_KEYS.length - 1) {
+			return null;
+		}
+
+		return BIRTH_TEXTURE_KEYS[currentIndex + 1];
+	}
 
 	beginHold(robotBodyId: any) {
 		if (this.destroyed) {
@@ -113,6 +163,15 @@ export default class Gema extends Phaser.GameObjects.Image {
 			this.bodyId = null;
 		}
 		super.destroy();
+	}
+
+	private createCollisionPoints() {
+		return [
+			new b2Vec2(pxm(-43), pxm(-41)),
+			new b2Vec2(pxm(43), pxm(-41)),
+			new b2Vec2(pxm(43), pxm(41)),
+			new b2Vec2(pxm(-43), pxm(41))
+		];
 	}
 
 	/* END-USER-CODE */

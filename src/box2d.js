@@ -30,6 +30,8 @@ export const {
 	b2Body_SetTransform,
 	b2Body_GetPosition,
 	b2Body_GetShapes,
+	b2Shape_EnableContactEvents,
+	b2World_GetContactEvents,
 	b2Body_SetLinearVelocity,
 	b2Body_SetAngularVelocity,
 	b2Body_GetLocalPoint,

@@ -19,6 +19,7 @@ import {
 	b2Body_SetAngularVelocity,
 	b2CreateCircleShape,
 	b2Circle,
+	b2Shape_EnableContactEvents,
 	b2Shape_SetCircle,
 	b2Vec2,
 	pxm,
@@ -51,6 +52,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 		const shape_3 = b2CreateCircleShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, new b2Circle(new b2Vec2(pxm(0), pxm(0)), pxm(70)));
+		b2Shape_EnableContactEvents(shape_3, true);
 
 		/* START-USER-CTR-CODE */
 		this.bodyId = body_2;
@@ -63,15 +65,17 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 	// Write your code here.
 	private bodyId!: any;
+	private shapeId: any = null;
 	private colliderShapeId: any = null;
 	private hitParticles: any = null;
 	private remainingHits = 0;
 	private sizeMultiplier = 1;
 	private destroyed = false;
+	private collisionBreakArmed = true;
 	private readonly baseScale = 0.2939291756479111;
 	private readonly baseRadius = 70.10210839202679;
 	private readonly minSplitMultiplier = 0.45;
-	private readonly childSizeMultiplier = 0.65;
+	private readonly childSizeMultiplier = 0.7;
 	private readonly splitChance = 0.7;
 	private readonly smallRockGemChance = 0.45;
 
@@ -133,6 +137,22 @@ export default class Roca extends Phaser.GameObjects.Image {
 		}
 
 		b2Shape_SetCircle(this.colliderShapeId, new b2Circle(new b2Vec2(pxm(0), pxm(0)), pxm(this.baseRadius * this.sizeMultiplier)));
+	}
+
+	getShapeId() {
+		return this.colliderShapeId;
+	}
+
+	canBreakFromCollision() {
+		return this.collisionBreakArmed && !this.destroyed;
+	}
+
+	disarmCollisionBreak() {
+		this.collisionBreakArmed = false;
+	}
+
+	isRockDestroyed() {
+		return this.destroyed;
 	}
 
 	private playHitFeedback() {
@@ -212,6 +232,20 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.destroySprite();
 	}
 
+	breakFromCollision() {
+		if (this.destroyed) {
+			return;
+		}
+
+		if (!this.collisionBreakArmed) {
+			return;
+		}
+
+		this.collisionBreakArmed = false;
+
+		this.breakRock();
+	}
+
 	private spawnChildRocks() {
 		const childCount = 2 + Math.floor(Math.random() * 2);
 		const childSize = this.sizeMultiplier * this.childSizeMultiplier;
@@ -271,7 +305,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 	}
 
 	private randomHitCount() {
-		return 3 + Math.floor(Math.random() * 2);
+		return 1 + Math.floor(Math.random() * 2);
 	}
 
 	private randomSizeMultiplier() {
