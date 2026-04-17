@@ -7,6 +7,11 @@
                 "key": "background"
             },
             {
+                "url": "assets/images/coin.png",
+                "type": "image",
+                "key": "coin"
+            },
+            {
                 "url": "assets/images/gem1.png",
                 "type": "image",
                 "key": "gem1"

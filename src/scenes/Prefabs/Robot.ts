@@ -45,7 +45,6 @@ export default class Robot extends SpineGameObject {
 
 	constructor(scene: Phaser.Scene, plugin: SpinePlugin, x: number, y: number, dataKey?: string, atlasKey?: string, skin?: string, boundsProvider?: SpineGameObjectBoundsProvider, xargs?: any) {
 		super(scene, plugin, x ?? 0, y ?? 0, dataKey ?? "mainCharacter", atlasKey ?? "mainCharacter-atlas", boundsProvider ?? new SkinsAndAnimationBoundsProvider("idle", ["default"]));
-		this.scene.events.on("gema-clicked", this.onGemaClicked, this);
 		this.liftDistance = pxm(this.scene.scale.height + 200);
 
 		this.skeleton.setSkinByName(skin ?? "default");
@@ -65,6 +64,8 @@ export default class Robot extends SpineGameObject {
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body_1 });
 		this.homePosition = pxmVec2(this.x, -this.y);
 		this.targetPosition = pxmVec2(this.x, -this.y);
+		this.animationState.setAnimation(0, "idle", true);
+		this.scene.events.on("update", this.handleSceneUpdate, this);
 
 		/* START-USER-CTR-CODE */
 		// Write your code here.
@@ -100,9 +101,15 @@ export default class Robot extends SpineGameObject {
 	private isGrabbing = false;
 	private isHolding = false;
 	private heldGem: any = null;
+	private pickupTarget: { x: number; y: number } | null = null;
 	private isLifting = false;
 	private isReturning = false;
 	private idleWanderStartDelay = 0;
+	private lastKnownPosition = new b2Vec2(0, 0);
+
+	private handleSceneUpdate(_time: number, delta: number) {
+		this.updateMovement(delta);
+	}
 
 	// Write your code here.
 	private onGemaClicked = (gem: any, x: number, y: number) => {
@@ -118,17 +125,51 @@ export default class Robot extends SpineGameObject {
 			return;
 		}
 
-		if (!gem) {
+		if (!gem || !gem.reserveForRobot?.(this.bodyId)) {
 			return;
 		}
 
 		this.isGrabbing = true;
 		this.heldGem = gem;
-		this.moveTo(x ?? gem.x, (y ?? gem.y) - 100);
+		this.pickupTarget = { x: x ?? gem.x, y: (y ?? gem.y) - 100 };
+		this.moveTo(this.pickupTarget.x, this.pickupTarget.y);
+	}
+
+	private updatePickupTargetFromGem() {
+		if (!this.isGrabbing || !this.heldGem || this.heldGem.destroyed || !this.heldGem.bodyId) {
+			return;
+		}
+
+		if (this.pickupTarget) {
+			this.moveTo(this.pickupTarget.x, this.pickupTarget.y);
+		}
+	}
+
+	private abortPickup() {
+		if (this.heldGem?.releaseRobotReservation) {
+			this.heldGem.releaseRobotReservation(this.bodyId);
+		}
+
+		this.isGrabbing = false;
+		this.isHolding = false;
+		this.isLifting = false;
+		this.isReturning = false;
+		this.heldGem = null;
+		this.pickupTarget = null;
+		this.targetPosition = this.homePosition;
+		this.idleWanderTarget = null;
+		this.idleWanderPause = 0;
+		this.idleWanderStartDelay = this.randomIdleEnterDelay();
+		this.animationState.setAnimation(0, "idle", true);
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 	}
 
 	private tryAutoAcquireNearestGem() {
 		if (this.isGrabbing || this.isHolding || this.isLifting || this.isReturning) {
+			return false;
+		}
+
+		if ((this.scene as any).isGemBeingCarried?.()) {
 			return false;
 		}
 
@@ -142,7 +183,7 @@ export default class Robot extends SpineGameObject {
 		let nearestDistance = Number.POSITIVE_INFINITY;
 
 		for (const gem of gems) {
-			if (!gem || gem.destroyed || !gem.bodyId) {
+			if (!gem || gem.destroyed || !gem.bodyId || !gem.canBeTargetedByRobot?.(this.bodyId)) {
 				continue;
 			}
 
@@ -180,7 +221,9 @@ export default class Robot extends SpineGameObject {
 		this.scaleX = Math.abs(this.scaleX) * desiredFacing;
 	}
 
-	updateMovement(delta: number) {
+	private updateMovement(delta: number) {
+		this.lastKnownPosition = b2Body_GetPosition(this.bodyId);
+
 		if (!this.isGrabbing && !this.isHolding && !this.isLifting && !this.isReturning) {
 			if (this.tryAutoAcquireNearestGem()) {
 				return;
@@ -188,6 +231,15 @@ export default class Robot extends SpineGameObject {
 
 			this.updateIdleWander(delta);
 			return;
+		}
+
+		if (this.isGrabbing) {
+			if (!this.heldGem || this.heldGem.destroyed || !this.heldGem.bodyId) {
+				this.abortPickup();
+				return;
+			}
+
+			this.updatePickupTargetFromGem();
 		}
 
 		const currentPosition = b2Body_GetPosition(this.bodyId);
@@ -200,8 +252,14 @@ export default class Robot extends SpineGameObject {
 			b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 			b2Body_SetTransform(this.bodyId, this.targetPosition, b2MakeRot(0));
 			if (this.isGrabbing) {
+				if (!this.heldGem || this.heldGem.destroyed || !this.heldGem.bodyId) {
+					this.abortPickup();
+					return;
+				}
+
 				this.isGrabbing = false;
 				this.isHolding = true;
+				this.pickupTarget = null;
 				this.playGrabAnimation();
 				this.scene.events.emit("robot-finished-gem-move", this);
 			} else if (this.isLifting) {
@@ -261,12 +319,18 @@ export default class Robot extends SpineGameObject {
 				this.animationState.setAnimation(0, "agarrando", true);
 				if (this.heldGem) {
 					this.heldGem.beginHold(this.bodyId);
-					const currentPosition = b2Body_GetPosition(this.bodyId);
-					this.targetPosition = new b2Vec2(currentPosition.x, currentPosition.y + this.liftDistance);
+					const liftBasePosition = this.isValidPosition(this.lastKnownPosition)
+						? this.lastKnownPosition
+						: b2Body_GetPosition(this.bodyId);
+					this.targetPosition = new b2Vec2(liftBasePosition.x, liftBasePosition.y + this.liftDistance);
 					this.isLifting = true;
 				}
 			}
 		};
+	}
+
+	private isValidPosition(position: { x: number; y: number }) {
+		return !(position.x === 0 && position.y === 0);
 	}
 
 	private finishLift() {
@@ -287,6 +351,7 @@ export default class Robot extends SpineGameObject {
 		this.isReturning = false;
 		this.isHolding = false;
 		this.isGrabbing = false;
+		this.pickupTarget = null;
 		this.idleWanderTarget = null;
 		this.idleWanderPause = 0;
 		this.idleWanderStartDelay = this.randomIdleEnterDelay();

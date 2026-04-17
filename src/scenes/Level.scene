@@ -56,8 +56,8 @@
             ],
             "label": "mainCharacter",
             "scope": "CLASS",
-            "x": 718,
-            "y": 290,
+            "x": 743,
+            "y": 255,
             "scaleX": 0.6501425353183732,
             "scaleY": 0.6501425353183732
         },
@@ -94,6 +94,33 @@
                     "halfHeight": 600
                 }
             ]
+        },
+        {
+            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
+            "id": "10ace3ba-b4f5-4186-b368-c3eb885c82cc",
+            "unlock": [
+                "x",
+                "y",
+                "scaleX",
+                "scaleY"
+            ],
+            "label": "mainCharacter_1",
+            "scope": "CLASS",
+            "x": 370,
+            "y": 225,
+            "scaleX": 0.6501425353183732,
+            "scaleY": 0.6501425353183732
+        },
+        {
+            "prefabId": "899e1f4a-41d0-419f-8d07-40851e206d09",
+            "id": "bdac3b4e-4d75-4b9a-9a87-1d4f08dfb97a",
+            "unlock": [
+                "x",
+                "y"
+            ],
+            "label": "coin",
+            "x": 394,
+            "y": 260
         }
     ],
     "plainObjects": [],

@@ -16,6 +16,7 @@ import {
 	WorldStep,
 	b2CreateBody,
 	b2DestroyBody,
+	b2DefaultFilter,
 	b2DefaultBodyDef,
 	b2DefaultWorldDef,
 	b2CreatePolygonShape,
@@ -29,15 +30,17 @@ import {
 	b2World_Draw,
 	b2Body_SetTransform,
 	b2Body_GetPosition,
+	b2Body_SetAwake,
 	b2Body_SetLinearVelocity,
 	b2Body_SetAngularVelocity,
+	b2Body_SetType,
+	b2Shape_SetFilter,
 	b2Shape_EnableContactEvents,
 
 	b2Vec2,
 	pxm,
 	pxmVec2,
 	} from "../../box2d.js";
-/* END-USER-IMPORTS */
 
 const BIRTH_TEXTURE_KEYS = [
 	"gem1",
@@ -60,11 +63,12 @@ function getRandomBirthTextureKey() {
 	return BIRTH_TEXTURE_KEYS[Math.floor(Math.random() * BIRTH_TEXTURE_KEYS.length)];
 }
 
+/* END-USER-IMPORTS */
+
 export default class Gema extends Phaser.GameObjects.Image {
 
 	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string) {
-		const birthTextureKey = texture || "gem1";
-		super(scene, x ?? 0, y ?? 0, birthTextureKey, frame);
+		super(scene, x ?? 0, y ?? 0, "gem1", frame);
 
 		// body
 		const body = b2CreateBody((this.scene as any).worldId, { 
@@ -89,10 +93,8 @@ export default class Gema extends Phaser.GameObjects.Image {
 		// Write your code here.
 		this.setInteractive({ useHandCursor: true });
 		this.on("pointerdown", () => {
-			this.scene.events.emit("gema-clicked", this, this.x, this.y);
+			this.scene.events.emit("gema-drag-start", this);
 		});
-		this.birthTextureKey = birthTextureKey;
-		this.birthType = BIRTH_TEXTURE_KEYS.indexOf(birthTextureKey as typeof BIRTH_TEXTURE_KEYS[number]) + 1;
 		/* END-USER-CTR-CODE */
 	}
 
@@ -101,11 +103,16 @@ export default class Gema extends Phaser.GameObjects.Image {
 	// Write your code here.
 	private bodyId!: any;
 	private shapeId!: any;
-	private birthTextureKey!: string;
-	private birthType!: number;
+	private readonly dynamicBodyType = b2BodyType.b2_dynamicBody;
+	private birthTextureKey = "gem1";
+	private birthType = 1;
 	private held = false;
 	private heldRobotBodyId: any = null;
+	private reservedByRobotBodyId: any = null;
 	private destroyed = false;
+	private merging = false;
+	private mouseCarried = false;
+	private collisionsDisabled = false;
 
 	getBirthType() {
 		return this.birthType;
@@ -120,12 +127,163 @@ export default class Gema extends Phaser.GameObjects.Image {
 	}
 
 	getNextBirthTextureKey() {
-		const currentIndex = BIRTH_TEXTURE_KEYS.indexOf(this.birthTextureKey as typeof BIRTH_TEXTURE_KEYS[number]);
+		const currentIndex = BIRTH_TEXTURE_KEYS.indexOf(this.getBirthTextureKey() as typeof BIRTH_TEXTURE_KEYS[number]);
 		if (currentIndex < 0 || currentIndex >= BIRTH_TEXTURE_KEYS.length - 1) {
 			return null;
 		}
 
 		return BIRTH_TEXTURE_KEYS[currentIndex + 1];
+	}
+
+	getRewardValue() {
+		return 10 * Math.pow(2, this.birthType - 1);
+	}
+
+	configureBirthTexture(textureKey: string = this.texture.key) {
+		this.birthTextureKey = textureKey;
+		const birthIndex = BIRTH_TEXTURE_KEYS.indexOf(textureKey as typeof BIRTH_TEXTURE_KEYS[number]);
+		this.birthType = birthIndex >= 0 ? birthIndex + 1 : 1;
+		this.setTexture(textureKey);
+	}
+
+	canMerge() {
+		return !this.destroyed && !this.merging && !this.mouseCarried;
+	}
+
+	canBeTargetedByRobot(robotBodyId: any) {
+		if (this.destroyed || this.merging || this.mouseCarried || this.held) {
+			return false;
+		}
+
+		return !this.reservedByRobotBodyId || this.reservedByRobotBodyId === robotBodyId;
+	}
+
+	reserveForRobot(robotBodyId: any) {
+		if (this.destroyed || this.merging || this.mouseCarried || this.held) {
+			return false;
+		}
+
+		if (this.reservedByRobotBodyId && this.reservedByRobotBodyId !== robotBodyId) {
+			return false;
+		}
+
+		this.reservedByRobotBodyId = robotBodyId;
+		this.freezeForReservation();
+		return true;
+	}
+
+	releaseRobotReservation(robotBodyId?: any) {
+		if (robotBodyId && this.reservedByRobotBodyId && this.reservedByRobotBodyId !== robotBodyId) {
+			return;
+		}
+
+		this.reservedByRobotBodyId = null;
+		this.restoreDynamicsAfterReservation();
+	}
+
+	private freezeForReservation() {
+		if (!this.bodyId) {
+			return;
+		}
+
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+		b2Body_SetType(this.bodyId, b2BodyType.b2_kinematicBody);
+		b2Body_SetAwake(this.bodyId, true);
+	}
+
+	private restoreDynamicsAfterReservation() {
+		if (!this.bodyId || this.destroyed || this.mouseCarried || this.held) {
+			return;
+		}
+
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
+		b2Body_SetAwake(this.bodyId, true);
+	}
+
+	private setCollisionsEnabled(enabled: boolean) {
+		if (!this.shapeId) {
+			return;
+		}
+
+		if (!enabled) {
+			if (this.collisionsDisabled) {
+				return;
+			}
+
+			const disabledFilter = b2DefaultFilter();
+			disabledFilter.maskBits = 0;
+			b2Shape_SetFilter(this.shapeId, disabledFilter);
+			this.collisionsDisabled = true;
+			return;
+		}
+
+		if (!this.collisionsDisabled) {
+			return;
+		}
+
+		b2Shape_SetFilter(this.shapeId, b2DefaultFilter());
+		this.collisionsDisabled = false;
+	}
+
+	beginMergeOut(durationMs = 1000) {
+		if (this.destroyed || this.merging) {
+			return;
+		}
+
+		this.merging = true;
+		this.disableInteractive();
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+		this.scene.tweens.killTweensOf(this);
+		this.scene.tweens.add({
+			targets: this,
+			scaleX: { from: this.scaleX, to: this.scaleX * 0.15 },
+			scaleY: { from: this.scaleY, to: this.scaleY * 0.15 },
+			alpha: { from: this.alpha, to: 0 },
+			duration: durationMs,
+			ease: "Sine.easeInOut",
+		});
+	}
+
+	beginMouseCarry() {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.releaseRobotReservation();
+		this.mouseCarried = true;
+		this.held = false;
+		this.heldRobotBodyId = null;
+		this.merging = false;
+		this.setAlpha(1);
+		this.setScale(1);
+		this.setDepth(1000);
+		this.setCollisionsEnabled(false);
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
+		b2Body_SetAwake(this.bodyId, true);
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+	}
+
+	updateMouseCarry(x: number, y: number) {
+		if (this.destroyed || !this.mouseCarried || !this.bodyId) {
+			return;
+		}
+
+		b2Body_SetTransform(this.bodyId, new b2Vec2(pxm(x), -pxm(y)), b2MakeRot(0));
+		b2Body_SetAwake(this.bodyId, true);
+	}
+
+	endMouseCarry() {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.mouseCarried = false;
+		this.setCollisionsEnabled(true);
+		b2Body_SetAwake(this.bodyId, true);
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 	}
 
 	beginHold(robotBodyId: any) {
@@ -135,6 +293,9 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 		this.held = true;
 		this.heldRobotBodyId = robotBodyId;
+		this.reservedByRobotBodyId = null;
+		this.setCollisionsEnabled(false);
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
 		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 		b2Body_SetAngularVelocity(this.bodyId, 0);
 	}
@@ -153,15 +314,23 @@ export default class Gema extends Phaser.GameObjects.Image {
 			return;
 		}
 
+		if (this.held) {
+			(this.scene as any).spawnRewardCoins?.(this.x, this.y, this.getRewardValue());
+		}
+
 		this.destroyed = true;
+		this.releaseRobotReservation();
 		this.held = false;
 		this.heldRobotBodyId = null;
+		this.mouseCarried = false;
+		this.collisionsDisabled = false;
 		(this.scene as any).unregisterGem?.(this);
 		RemoveSpriteFromWorld((this.scene as any).worldId, this, false);
 		if (this.bodyId) {
 			b2DestroyBody(this.bodyId);
 			this.bodyId = null;
 		}
+		this.mouseCarried = false;
 		super.destroy();
 	}
 

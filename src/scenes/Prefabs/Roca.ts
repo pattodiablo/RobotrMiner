@@ -264,6 +264,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 	private spawnGemReward() {
 		const gem = new Gema(this.scene, this.x, this.y);
+		gem.configureBirthTexture("gem1");
 		this.scene.add.existing(gem);
 		this.applyBreakImpulse(gem, Math.random() < 0.5 ? -1 : 1, 2 + Math.random() * 0.5);
 		(this.scene as any).registerGem?.(gem);

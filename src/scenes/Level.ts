@@ -4,6 +4,7 @@
 /* START OF COMPILED CODE */
 
 import Robot from "./Prefabs/Robot";
+import Coin from "./Prefabs/Coin";
 /* START-USER-IMPORTS */
 import Gema from "./Prefabs/Gema";
 import Roca from "./Prefabs/Roca";
@@ -79,7 +80,7 @@ export default class Level extends Phaser.Scene {
 		}, b2MakeBox(pxm(800), pxm(100)));
 
 		// mainCharacter
-		const mainCharacter = new Robot(this, this.spine, 718, 290);
+		const mainCharacter = new Robot(this, this.spine, 743, 255);
 		this.add.existing(mainCharacter);
 		mainCharacter.scaleX = 0.6501425353183732;
 		mainCharacter.scaleY = 0.6501425353183732;
@@ -108,7 +109,14 @@ export default class Level extends Phaser.Scene {
 			restitution: 0.5
 		}, b2MakeBox(pxm(100), pxm(600)));
 
+		// mainCharacter_1
+		const mainCharacter_1 = new Robot(this, this.spine, 370, 225);
+		this.add.existing(mainCharacter_1);
+		mainCharacter_1.scaleX = 0.6501425353183732;
+		mainCharacter_1.scaleY = 0.6501425353183732;
+
 		this.mainCharacter = mainCharacter;
+		this.mainCharacter_1 = mainCharacter_1;
 
 		this.events.emit("scene-awake");
 	}
@@ -120,12 +128,14 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private mainCharacter!: Robot;
+	private mainCharacter_1!: Robot;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
 
 	// Write your code here
 	private gems: Gema[] = [];
+	private carriedGem: Gema | null = null;
 
 	private readonly rockSpawnMinDelay = 4000;
 	private readonly rockSpawnMaxDelay = 10000;
@@ -168,10 +178,9 @@ export default class Level extends Phaser.Scene {
 		this.editorCreate();
 		this.createLevelBounds();
 		this.setupBox2DDebug();
-		this.mainCharacter.animationState.setAnimation(0, "idle", true);
-		this.events.on("robot-finished-gem-move", () => {
-			// Hook for when the robot reaches the gem-requested target.
-		});
+		this.events.on("gema-drag-start", this.beginGemCarry, this);
+		this.input.on("pointermove", this.handlePointerMove, this);
+		this.input.on("pointerup", this.handlePointerUp, this);
 		this.scheduleNextRockSpawn();
 		this.debugToggleKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3);
 
@@ -185,7 +194,7 @@ export default class Level extends Phaser.Scene {
 			this.setBox2DDebugEnabled(!this.debugEnabled);
 		}
 
-		this.mainCharacter.updateMovement(delta);
+		this.updateCarriedGem();
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.handleGemMerges();
 		this.handleRockImpacts();
@@ -260,6 +269,66 @@ export default class Level extends Phaser.Scene {
 
 	public unregisterGem(gem: Gema) {
 		this.gems = this.gems.filter((currentGem) => currentGem !== gem);
+		if (this.carriedGem === gem) {
+			this.carriedGem = null;
+		}
+	}
+
+	public isGemBeingCarried() {
+		return this.carriedGem !== null;
+	}
+
+	public spawnRewardCoins(x: number, y: number, gemValue: number) {
+		const coinCount = Math.max(1, Math.min(8, Math.floor(Math.log2(Math.max(1, gemValue / 10))) + 1));
+		const horizontalSpread = 28;
+		const verticalStart = 120;
+
+		for (let index = 0; index < coinCount; index += 1) {
+			const offsetX = (Math.random() * 2 - 1) * horizontalSpread;
+			const offsetY = Math.random() * 40;
+			const coin = new Coin(this, x + offsetX, -(verticalStart + offsetY));
+			this.add.existing(coin);
+		}
+	}
+
+	private beginGemCarry(gem: Gema) {
+		if (this.carriedGem && this.carriedGem !== gem) {
+			this.carriedGem.endMouseCarry();
+		}
+
+		this.carriedGem = gem;
+		gem.beginMouseCarry();
+	}
+
+	private handlePointerMove(pointer: Phaser.Input.Pointer) {
+		if (!this.carriedGem || !pointer.isDown) {
+			return;
+		}
+
+		this.carriedGem.updateMouseCarry(pointer.worldX, pointer.worldY);
+	}
+
+	private handlePointerUp() {
+		if (!this.carriedGem) {
+			return;
+		}
+
+		this.carriedGem.endMouseCarry();
+		this.carriedGem = null;
+	}
+
+	private updateCarriedGem() {
+		if (!this.carriedGem) {
+			return;
+		}
+
+		const pointer = this.input.activePointer;
+		if (!pointer.isDown) {
+			this.handlePointerUp();
+			return;
+		}
+
+		this.carriedGem.updateMouseCarry(pointer.worldX, pointer.worldY);
 	}
 
 	private handleGemMerges() {
@@ -274,6 +343,10 @@ export default class Level extends Phaser.Scene {
 			const gemB = this.findGemByShapeId(contact.shapeIdB);
 
 			if (!gemA || !gemB || gemA === gemB) {
+				continue;
+			}
+
+			if (!gemA.canMerge() || !gemB.canMerge()) {
 				continue;
 			}
 
@@ -379,12 +452,19 @@ export default class Level extends Phaser.Scene {
 			return;
 		}
 
-		gemA.destroyGem();
-		gemB.destroyGem();
+		gemA.beginMergeOut(450);
+		gemB.beginMergeOut(450);
 
-		const mergedGem = new Gema(this, mergedX, mergedY, textureKey);
-		this.add.existing(mergedGem);
-		this.registerGem(mergedGem);
+		this.time.delayedCall(450, () => {
+			gemA.destroyGem();
+			gemB.destroyGem();
+
+			const mergedGem = new Gema(this, mergedX, mergedY);
+			mergedGem.configureBirthTexture(textureKey);
+			mergedGem.setScale(1);
+			this.add.existing(mergedGem);
+			this.registerGem(mergedGem);
+		});
 	}
 
 	private scheduleNextRockSpawn() {

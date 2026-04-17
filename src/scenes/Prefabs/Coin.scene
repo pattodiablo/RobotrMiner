@@ -1,5 +1,5 @@
 {
-    "id": "58331c2c-15d7-4a52-9bae-33f0e61aa9b2",
+    "id": "899e1f4a-41d0-419f-8d07-40851e206d09",
     "sceneType": "PREFAB",
     "settings": {
         "exportClass": true,
@@ -14,26 +14,24 @@
     "displayList": [
         {
             "type": "Image",
-            "id": "73b456f1-b515-4980-85ee-12dd9649797d",
-            "label": "gema",
-            "scope": "CLASS",
+            "id": "30ac6f0b-4801-4838-8c86-172637e3e218",
+            "label": "coin",
             "texture": {
-                "key": "gema1"
+                "key": "coin"
             },
             "list": [
                 {
                     "type": "b2Body",
-                    "id": "c7c996c0-60ac-4ff6-884c-e9bdf360f13a",
+                    "id": "07756a7b-ed3b-4ad7-8abc-076f05f6dca4",
                     "label": "body",
                     "_type": 2,
                     "gravityScale": 10,
                     "list": [
                         {
-                            "type": "b2BoxShape",
-                            "id": "b2cbc2da-9be3-45e3-bdf0-abcdb7f96dc9",
+                            "type": "b2CircleShape",
+                            "id": "44d86ddb-4aa2-4017-82bb-fb17de8b9ea0",
                             "label": "shape",
-                            "halfWidth": 41,
-                            "halfHeight": 39
+                            "radius": 17.5
                         }
                     ]
                 }
