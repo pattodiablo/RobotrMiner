@@ -4,6 +4,7 @@
 /* START OF COMPILED CODE */
 
 /* START-USER-IMPORTS */
+import Debree from "./Debree";
 import Gema from "./Gema";
 import {
 
@@ -222,6 +223,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 		this.destroyed = true;
 		this.removeFromWorld();
+		this.spawnDebreeBurst();
 
 		if (this.sizeMultiplier > this.minSplitMultiplier && Math.random() < this.splitChance) {
 			this.spawnChildRocks();
@@ -268,6 +270,19 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.scene.add.existing(gem);
 		this.applyBreakImpulse(gem, Math.random() < 0.5 ? -1 : 1, 2 + Math.random() * 0.5);
 		(this.scene as any).registerGem?.(gem);
+	}
+
+	private spawnDebreeBurst() {
+		const debreeCount = 3 + Math.floor(Math.random() * 4);
+
+		for (let index = 0; index < debreeCount; index += 1) {
+			const offsetRadius = 8 + Math.random() * 24;
+			const offsetAngle = Math.random() * Math.PI * 2;
+			const offsetX = Math.cos(offsetAngle) * offsetRadius;
+			const offsetY = Math.sin(offsetAngle) * offsetRadius;
+			const debree = new Debree(this.scene, this.x + offsetX, this.y + offsetY);
+			this.scene.add.existing(debree);
+		}
 	}
 
 	private applyBreakImpulse(target: object, horizontalDirection: number, verticalSpeed: number) {

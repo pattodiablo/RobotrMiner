@@ -4,12 +4,10 @@
 /* START OF COMPILED CODE */
 
 /* START-USER-IMPORTS */
-import type { b2WorldId } from "../../box2d.js";
 import {
 
 	AddSpriteToWorld,
 	RemoveSpriteFromWorld,
-	b2DestroyShape,
 	b2BodyType,
 	b2CreateBody,
 	b2DestroyBody,
@@ -19,8 +17,6 @@ import {
 	b2Body_SetAngularVelocity,
 	b2CreateCircleShape,
 	b2Circle,
-	b2Shape_EnableContactEvents,
-	b2Shape_SetCircle,
 	b2Vec2,
 	pxm,
 	pxmVec2,
@@ -28,16 +24,18 @@ import {
 
 /* END-USER-IMPORTS */
 
-export default class Coin extends Phaser.GameObjects.Image {
+export default class Debree extends Phaser.GameObjects.Image {
 	private bodyId!: any;
 	private destroyed = false;
-	private fadeTimer?: Phaser.Time.TimerEvent;
+	private lifeTimer?: Phaser.Time.TimerEvent;
 	private blinkTween?: Phaser.Tweens.Tween;
-	private readonly coinValue: number;
 
-	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string, coinValue = 1) {
-		super(scene, x ?? 0, y ?? 0, texture || "coin", frame);
-		this.coinValue = coinValue;
+	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string) {
+		super(scene, x ?? 0, y ?? 0, texture || "debree1", frame);
+
+		const scale = 0.28 + Math.random() * 0.35;
+		this.setScale(scale);
+		this.setDepth(950);
 
 		// body
 		const body = b2CreateBody((this.scene as any).worldId, { 
@@ -50,52 +48,55 @@ export default class Coin extends Phaser.GameObjects.Image {
 		// add body to this
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body });
 		this.bodyId = body;
-		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2((Math.random() * 2 - 1) * 2, 1 + Math.random() * 2));
-		b2Body_SetAngularVelocity(this.bodyId, (Math.random() * 2 - 1) * 6);
-		this.setScale(0.85);
-		this.setDepth(1000);
+
+		const angle = Math.random() * Math.PI * 2;
+		const speed = 2.2 + Math.random() * 4.8;
+		const upwardBoost = 1.8 + Math.random() * 2.6;
+		const velocityX = Math.cos(angle) * speed;
+		const velocityY = Math.sin(angle) * speed + upwardBoost;
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(pxm(velocityX * 40), pxm(velocityY * 40)));
+		b2Body_SetAngularVelocity(this.bodyId, (Math.random() * 2 - 1) * 9);
 
 		// shape
 		const shape = b2CreateCircleShape(body, { 
 			...b2DefaultShapeDef()
-		}, new b2Circle(new b2Vec2(pxm(0), pxm(0)), pxm(17.5)));
+		}, new b2Circle(new b2Vec2(pxm(0), pxm(0)), pxm(8)));
 
 		/* START-USER-CTR-CODE */
 		// Write your code here.
-		this.startRewardLifecycle();
+		this.startLifeCycle();
 		/* END-USER-CTR-CODE */
 	}
 
 	/* START-USER-CODE */
 
 	// Write your code here.
-	private startRewardLifecycle() {
-		const blinkDelay = 900 + Math.random() * 700;
-		this.fadeTimer = this.scene.time.delayedCall(blinkDelay, () => {
+	private startLifeCycle() {
+		const lifeMs = 700 + Math.random() * 800;
+		this.lifeTimer = this.scene.time.delayedCall(lifeMs, () => {
 			if (this.destroyed) {
 				return;
 			}
 
 			this.blinkTween = this.scene.tweens.add({
 				targets: this,
-				alpha: { from: 1, to: 0.15 },
+				alpha: { from: 1, to: 0.2 },
 				duration: 80,
 				yoyo: true,
 				repeat: 5,
-				onComplete: () => this.destroyCoin(),
+				onComplete: () => this.destroyDebree(),
 			});
 		});
 	}
 
-	private destroyCoin() {
+	private destroyDebree() {
 		if (this.destroyed) {
 			return;
 		}
 
 		this.destroyed = true;
-		this.fadeTimer?.remove(false);
+		this.lifeTimer?.remove(false);
 		this.blinkTween?.remove();
-		(this.scene as any).collectCoinReward?.(this.coinValue);
 		RemoveSpriteFromWorld((this.scene as any).worldId, this, false);
 		if (this.bodyId) {
 			b2DestroyBody(this.bodyId);

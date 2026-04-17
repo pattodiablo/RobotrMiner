@@ -106,21 +106,37 @@
             ],
             "label": "mainCharacter_1",
             "scope": "CLASS",
-            "x": 370,
-            "y": 225,
+            "x": 396,
+            "y": 208,
+            "scaleX": 0.6501425353183732,
+            "scaleY": 0.6501425353183732
+        },
+        {
+            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
+            "id": "590e24f8-79fe-4e19-8a54-f77ae7c58cbb",
+            "unlock": [
+                "x",
+                "y",
+                "scaleX",
+                "scaleY"
+            ],
+            "label": "mainCharacter_2",
+            "scope": "CLASS",
+            "x": 206,
+            "y": 199,
             "scaleX": 0.6501425353183732,
             "scaleY": 0.6501425353183732
         },
         {
             "prefabId": "899e1f4a-41d0-419f-8d07-40851e206d09",
-            "id": "bdac3b4e-4d75-4b9a-9a87-1d4f08dfb97a",
+            "id": "22599059-c2bc-4de5-b1b4-aa4ffd47e069",
             "unlock": [
                 "x",
                 "y"
             ],
             "label": "coin",
-            "x": 394,
-            "y": 260
+            "x": -252,
+            "y": 129
         }
     ],
     "plainObjects": [],

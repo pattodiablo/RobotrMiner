@@ -12,6 +12,11 @@
                 "key": "coin"
             },
             {
+                "url": "assets/images/debree1.png",
+                "type": "image",
+                "key": "debree1"
+            },
+            {
                 "url": "assets/images/gem1.png",
                 "type": "image",
                 "key": "gem1"

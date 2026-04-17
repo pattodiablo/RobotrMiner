@@ -111,6 +111,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 	private reservedByRobotBodyId: any = null;
 	private destroyed = false;
 	private merging = false;
+	private mergeTween?: Phaser.Tweens.Tween;
 	private mouseCarried = false;
 	private collisionsDisabled = false;
 
@@ -226,23 +227,43 @@ export default class Gema extends Phaser.GameObjects.Image {
 		this.collisionsDisabled = false;
 	}
 
-	beginMergeOut(durationMs = 1000) {
+	beginMergeAttraction(targetX: number, targetY: number, durationMs = 220) {
 		if (this.destroyed || this.merging) {
 			return;
 		}
 
 		this.merging = true;
 		this.disableInteractive();
+		this.setDepth(1200);
+		this.setCollisionsEnabled(false);
+		b2Body_SetType(this.bodyId, b2BodyType.b2_kinematicBody);
 		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 		b2Body_SetAngularVelocity(this.bodyId, 0);
+		const startX = this.x;
+		const startY = this.y;
+		const startScaleX = this.scaleX;
+		const startScaleY = this.scaleY;
+
 		this.scene.tweens.killTweensOf(this);
-		this.scene.tweens.add({
-			targets: this,
-			scaleX: { from: this.scaleX, to: this.scaleX * 0.15 },
-			scaleY: { from: this.scaleY, to: this.scaleY * 0.15 },
-			alpha: { from: this.alpha, to: 0 },
+		this.mergeTween = this.scene.tweens.addCounter({
+			from: 0,
+			to: 1,
 			duration: durationMs,
-			ease: "Sine.easeInOut",
+			ease: "Cubic.easeInOut",
+			onUpdate: (tween) => {
+				const progress = Number(tween.getValue() ?? 0);
+				const easedProgress = progress * progress * (3 - 2 * progress);
+				const nextX = Phaser.Math.Linear(startX, targetX, easedProgress);
+				const nextY = Phaser.Math.Linear(startY, targetY, easedProgress);
+				const pulseScale = 1 + Math.sin(progress * Math.PI) * 0.12;
+				this.setPosition(nextX, nextY);
+				this.setScale(startScaleX * pulseScale, startScaleY * pulseScale);
+				b2Body_SetTransform(this.bodyId, new b2Vec2(pxm(nextX), -pxm(nextY)), b2MakeRot(0));
+				b2Body_SetAwake(this.bodyId, true);
+			},
+			onComplete: () => {
+				this.mergeTween = undefined;
+			},
 		});
 	}
 
@@ -319,6 +340,8 @@ export default class Gema extends Phaser.GameObjects.Image {
 		}
 
 		this.destroyed = true;
+		this.mergeTween?.remove();
+		this.mergeTween = undefined;
 		this.releaseRobotReservation();
 		this.held = false;
 		this.heldRobotBodyId = null;

@@ -110,13 +110,24 @@ export default class Level extends Phaser.Scene {
 		}, b2MakeBox(pxm(100), pxm(600)));
 
 		// mainCharacter_1
-		const mainCharacter_1 = new Robot(this, this.spine, 370, 225);
+		const mainCharacter_1 = new Robot(this, this.spine, 396, 208);
 		this.add.existing(mainCharacter_1);
 		mainCharacter_1.scaleX = 0.6501425353183732;
 		mainCharacter_1.scaleY = 0.6501425353183732;
 
+		// mainCharacter_2
+		const mainCharacter_2 = new Robot(this, this.spine, 206, 199);
+		this.add.existing(mainCharacter_2);
+		mainCharacter_2.scaleX = 0.6501425353183732;
+		mainCharacter_2.scaleY = 0.6501425353183732;
+
+		// coin
+		const coin = new Coin(this, -252, 129);
+		this.add.existing(coin);
+
 		this.mainCharacter = mainCharacter;
 		this.mainCharacter_1 = mainCharacter_1;
+		this.mainCharacter_2 = mainCharacter_2;
 
 		this.events.emit("scene-awake");
 	}
@@ -129,6 +140,7 @@ export default class Level extends Phaser.Scene {
 
 	private mainCharacter!: Robot;
 	private mainCharacter_1!: Robot;
+	private mainCharacter_2!: Robot;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -136,9 +148,16 @@ export default class Level extends Phaser.Scene {
 	// Write your code here
 	private gems: Gema[] = [];
 	private carriedGem: Gema | null = null;
+	private rockSpawnCount = 0;
+	private moneyValue = 0;
+	private moneyDisplayValue = 0;
+	private moneyText!: Phaser.GameObjects.Text;
+	private moneyTween?: Phaser.Tweens.Tween;
 
-	private readonly rockSpawnMinDelay = 4000;
-	private readonly rockSpawnMaxDelay = 10000;
+	private readonly rockSpawnMinDelay = 2600;
+	private readonly rockSpawnMaxDelay = 7500;
+	private readonly rockSpawnRampSpawns = 18;
+	private readonly rockSpawnVariance = 0.32;
 	private debugCanvas: HTMLCanvasElement | null = null;
 	private debugContext: CanvasRenderingContext2D | null = null;
 	private debugDraw: any = null;
@@ -178,6 +197,7 @@ export default class Level extends Phaser.Scene {
 		this.editorCreate();
 		this.createLevelBounds();
 		this.setupBox2DDebug();
+		this.createMoneyHud();
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
 		this.input.on("pointermove", this.handlePointerMove, this);
 		this.input.on("pointerup", this.handlePointerUp, this);
@@ -286,9 +306,77 @@ export default class Level extends Phaser.Scene {
 		for (let index = 0; index < coinCount; index += 1) {
 			const offsetX = (Math.random() * 2 - 1) * horizontalSpread;
 			const offsetY = Math.random() * 40;
-			const coin = new Coin(this, x + offsetX, -(verticalStart + offsetY));
+			const coin = new Coin(this, x + offsetX, -(verticalStart + offsetY), "coin", undefined, this.splitGemValue(gemValue, coinCount, index));
 			this.add.existing(coin);
 		}
+	}
+
+	private splitGemValue(totalValue: number, coinCount: number, index: number) {
+		const baseValue = Math.floor(totalValue / coinCount);
+		const remainder = totalValue % coinCount;
+		return baseValue + (index < remainder ? 1 : 0);
+	}
+
+	private createMoneyHud() {
+		this.moneyText = this.add.text(this.scale.width - 28, 24, this.formatMoneyValue(this.moneyDisplayValue), {
+			fontFamily: "Courier New, monospace",
+			fontSize: "28px",
+			color: "#f8d66d",
+			stroke: "#1a1205",
+			strokeThickness: 6,
+			align: "right",
+		});
+		this.moneyText.setOrigin(1, 0);
+		this.moneyText.setScrollFactor(0);
+		this.moneyText.setDepth(2000);
+	}
+
+	public collectCoinReward(amount: number) {
+		if (amount <= 0) {
+			return;
+		}
+
+		this.moneyValue += amount;
+		this.animateMoneyHud();
+	}
+
+	private animateMoneyHud() {
+		this.moneyTween?.stop();
+		const startValue = this.moneyDisplayValue;
+		const targetValue = this.moneyValue;
+		const tweenState = { value: startValue };
+
+		this.moneyTween = this.tweens.addCounter({
+			from: startValue,
+			to: targetValue,
+			duration: 260,
+			ease: "Cubic.easeOut",
+			onUpdate: (tween) => {
+				const nextValue = Math.round(Number(tween.getValue() ?? 0));
+				this.moneyDisplayValue = nextValue;
+				this.moneyText.setText(this.formatMoneyValue(nextValue));
+				this.moneyText.setScale(1.02);
+			},
+			onComplete: () => {
+				this.moneyDisplayValue = targetValue;
+				this.moneyText.setText(this.formatMoneyValue(targetValue));
+				this.moneyText.setScale(1);
+			},
+		});
+
+		this.tweens.add({
+			targets: this.moneyText,
+			scaleX: { from: 1, to: 1.07 },
+			scaleY: { from: 1, to: 1.07 },
+			duration: 90,
+			yoyo: true,
+			ease: "Sine.easeOut",
+		});
+	}
+
+	private formatMoneyValue(value: number) {
+		const rawValue = Math.max(0, Math.floor(value)).toString().padStart(9, "0");
+		return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 	}
 
 	private beginGemCarry(gem: Gema) {
@@ -452,24 +540,40 @@ export default class Level extends Phaser.Scene {
 			return;
 		}
 
-		gemA.beginMergeOut(450);
-		gemB.beginMergeOut(450);
+		gemA.beginMergeAttraction(mergedX, mergedY, 220);
+		gemB.beginMergeAttraction(mergedX, mergedY, 220);
 
-		this.time.delayedCall(450, () => {
+		this.time.delayedCall(220, () => {
 			gemA.destroyGem();
 			gemB.destroyGem();
 
 			const mergedGem = new Gema(this, mergedX, mergedY);
 			mergedGem.configureBirthTexture(textureKey);
-			mergedGem.setScale(1);
+			mergedGem.setScale(0.82);
 			this.add.existing(mergedGem);
 			this.registerGem(mergedGem);
+			this.tweens.add({
+				targets: mergedGem,
+				scaleX: 1,
+				scaleY: 1,
+				duration: 180,
+				ease: "Back.easeOut",
+			});
 		});
 	}
 
+	private computeNextRockSpawnDelay() {
+		const progress = Math.min(1, this.rockSpawnCount / this.rockSpawnRampSpawns);
+		const easedProgress = Math.sqrt(progress);
+		const trendDelay = this.rockSpawnMaxDelay - (this.rockSpawnMaxDelay - this.rockSpawnMinDelay) * easedProgress;
+		const jitter = (Math.random() * 2 - 1) * trendDelay * this.rockSpawnVariance;
+		return Math.max(this.rockSpawnMinDelay, Math.min(this.rockSpawnMaxDelay, trendDelay + jitter));
+	}
+
 	private scheduleNextRockSpawn() {
-		const delay = this.rockSpawnMinDelay + Math.random() * (this.rockSpawnMaxDelay - this.rockSpawnMinDelay);
+		const delay = this.computeNextRockSpawnDelay();
 		this.time.delayedCall(delay, () => {
+			this.rockSpawnCount += 1;
 			const margin = 80;
 			const width = this.scale.width;
 			const x = -margin + Math.random() * (width + margin * 2);
