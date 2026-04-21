@@ -155,6 +155,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 			return false;
 		}
 
+		if (this.isInsideDropPlace()) {
+			return false;
+		}
+
 		if (!this.isInSecondLevel()) {
 			return false;
 		}
@@ -326,6 +330,32 @@ export default class Gema extends Phaser.GameObjects.Image {
 		b2Body_SetType(this.bodyId, this.dynamicBodyType);
 		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 		b2Body_SetAngularVelocity(this.bodyId, 0);
+	}
+
+	releaseFromRobotHold(x: number, y: number) {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.held = false;
+		this.heldRobotBodyId = null;
+		this.releaseRobotReservation();
+		this.setCollisionsEnabled(true);
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
+		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(0));
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+		b2Body_SetAwake(this.bodyId, true);
+	}
+
+	private isInsideDropPlace() {
+		const dropPlace = (this.scene as any).dropPlace as Phaser.GameObjects.Rectangle | undefined;
+		if (!dropPlace) {
+			return false;
+		}
+
+		const bounds = dropPlace.getBounds();
+		return this.x >= bounds.left && this.x <= bounds.right && this.y >= bounds.top && this.y <= bounds.bottom;
 	}
 
 	updateHold() {

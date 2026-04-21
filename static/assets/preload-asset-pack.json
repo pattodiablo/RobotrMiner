@@ -143,6 +143,11 @@
                 "key": "oruguita"
             },
             {
+                "url": "assets/images/paredLateral.png",
+                "type": "image",
+                "key": "paredLateral"
+            },
+            {
                 "url": "assets/images/PlayerBot.png",
                 "type": "image",
                 "key": "PlayerBot"

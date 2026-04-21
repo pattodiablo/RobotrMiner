@@ -93,6 +93,8 @@ export default class Robot extends SpineGameObject {
 	private liftDistance = pxm(900);
 	private readonly returnThreshold = 0.05;
 	private homePosition = new b2Vec2(0, 0);
+	private stackCount = 0;
+	private readonly stackVerticalSpacing = 78;
 	private idleWanderTarget: { x: number; y: number } | null = null;
 	private idleWanderPause = 0;
 	private readonly idleWanderRadius = pxm(180);
@@ -392,17 +394,19 @@ export default class Robot extends SpineGameObject {
 					const liftBasePosition = this.isValidPosition(this.lastKnownPosition)
 						? this.lastKnownPosition
 						: b2Body_GetPosition(this.bodyId);
-					const offscreenLiftY = this.getOffscreenLiftTargetY();
-					const targetLiftY = Math.max(liftBasePosition.y + this.liftDistance, offscreenLiftY);
-					this.targetPosition = new b2Vec2(liftBasePosition.x, targetLiftY);
+					const stackTarget = this.getStackTargetPosition(liftBasePosition.x);
+					this.targetPosition = stackTarget;
 					this.isLifting = true;
 				}
 			}
 		};
 	}
 
-	private getOffscreenLiftTargetY() {
-		return pxm(this.scene.scale.height + 1400);
+	private getStackTargetPosition(referenceX: number) {
+		const dropPlace = (this.scene as any).dropPlace as Phaser.GameObjects.Rectangle | undefined;
+		const targetX = dropPlace ? dropPlace.x : referenceX;
+		const targetY = dropPlace ? dropPlace.y - this.stackCount * this.stackVerticalSpacing : this.homePosition.y;
+		return pxmVec2(targetX, -targetY);
 	}
 
 	private isValidPosition(position: { x: number; y: number }) {
@@ -415,7 +419,9 @@ export default class Robot extends SpineGameObject {
 		this.animationState.setAnimation(0, "idle", true);
 
 		if (this.heldGem) {
-			this.heldGem.destroyGem();
+			const dropPosition = this.targetPosition;
+			this.heldGem.releaseFromRobotHold?.(dropPosition.x, dropPosition.y);
+			this.stackCount += 1;
 			this.heldGem = null;
 		}
 

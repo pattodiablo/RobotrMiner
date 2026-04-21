@@ -87,17 +87,17 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private shapeId!: any;
 	private readonly travelSpeed = pxm(70);
 	private readonly snapThreshold = pxm(0.58);
-	private readonly targetY = 10;
+	private readonly targetY = 15;
 	private readonly targetX = 0;
+	private readonly horizontalTurnAngleDegrees = 90;
+	private readonly horizontalTurnRamp = 0.45;
+	private readonly rotationReturnRate = 6;
 	private startX!: number;
 	private startY!: number;
 	private movementPhase = 0;
-	private tiltApplied = false;
-	private tiltResetTimer?: Phaser.Time.TimerEvent;
-	private readonly tiltAngleDegrees = 16;
-	private readonly tiltHoldDuration = 2600;
+	private currentTiltAngleDegrees = 0;
 
-	private handleSceneUpdate() {
+	private handleSceneUpdate(_time: number, delta: number) {
 		if (!this.bodyId) {
 			return;
 		}
@@ -110,34 +110,30 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				this.setBodyPosition(position.x, this.targetY);
 				this.setBodyVelocity(0, 0);
 				this.movementPhase = 1;
-				this.tiltApplied = false;
-				b2Body_SetAngularVelocity(this.bodyId, 0);
 				return;
 			}
 
 			this.setBodyVelocity(0, Math.sign(deltaY) * this.travelSpeed);
-			b2Body_SetAngularVelocity(this.bodyId, 0);
+			this.easeRotationToZero(delta);
 			return;
 		}
 
 		if (this.movementPhase === 1) {
 			const deltaX = this.targetX - position.x;
+			const horizontalDistance = Math.max(1, this.startX - this.targetX);
+			const traveledDistance = this.startX - position.x;
+			const progress = Phaser.Math.Clamp(traveledDistance / (horizontalDistance * this.horizontalTurnRamp), 0, 1);
+			this.currentTiltAngleDegrees = this.horizontalTurnAngleDegrees * progress;
+			this.applyCurrentTilt(position);
 
 			if (Math.abs(deltaX) <= this.snapThreshold) {
 				this.setBodyPosition(this.targetX, position.y);
 				this.setBodyVelocity(0, 0);
 				this.movementPhase = 2;
-				this.resetTilt();
-				b2Body_SetAngularVelocity(this.bodyId, 0);
 				return;
 			}
 
-			if (!this.tiltApplied) {
-				this.applyTilt();
-				this.tiltApplied = true;
-			}
 			this.setBodyVelocity(Math.sign(deltaX) * this.travelSpeed, 0);
-			b2Body_SetAngularVelocity(this.bodyId, 0);
 			return;
 		}
 
@@ -148,12 +144,11 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				this.setBodyPosition(this.targetX, this.startY);
 				this.setBodyVelocity(0, 0);
 				this.movementPhase = 3;
-				b2Body_SetAngularVelocity(this.bodyId, 0);
 				return;
 			}
 
 			this.setBodyVelocity(0, Math.sign(deltaY) * this.travelSpeed);
-			b2Body_SetAngularVelocity(this.bodyId, 0);
+			this.easeRotationToZero(delta);
 			return;
 		}
 
@@ -163,33 +158,31 @@ export default class Leveler extends Phaser.GameObjects.Image {
 			this.setBodyPosition(this.startX, this.startY);
 			this.setBodyVelocity(0, 0);
 			this.movementPhase = 0;
-			this.resetTilt();
-			this.tiltApplied = false;
-			b2Body_SetAngularVelocity(this.bodyId, 0);
 			return;
 		}
 
 		this.setBodyVelocity(Math.sign(deltaX) * this.travelSpeed, 0);
-		b2Body_SetAngularVelocity(this.bodyId, 0);
+		this.easeRotationToZero(delta);
 	}
 
 	private setBodyPosition(x: number, y: number) {
-		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(0));
+		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(Phaser.Math.DegToRad(this.currentTiltAngleDegrees)));
 	}
 
-	private applyTilt() {
-		this.tiltResetTimer?.remove(false);
-		const angle = Phaser.Math.DegToRad(this.tiltAngleDegrees);
-		b2Body_SetTransform(this.bodyId, b2Body_GetPosition(this.bodyId), b2MakeRot(angle));
-		this.tiltResetTimer = this.scene.time.delayedCall(this.tiltHoldDuration, () => {
-			this.resetTilt();
-		});
+	private applyCurrentTilt(position = b2Body_GetPosition(this.bodyId)) {
+		b2Body_SetTransform(this.bodyId, position, b2MakeRot(Phaser.Math.DegToRad(this.currentTiltAngleDegrees)));
 	}
 
-	private resetTilt() {
-		this.tiltResetTimer?.remove(false);
-		this.tiltResetTimer = undefined;
-		b2Body_SetTransform(this.bodyId, b2Body_GetPosition(this.bodyId), b2MakeRot(0));
+	private easeRotationToZero(delta: number) {
+		if (Math.abs(this.currentTiltAngleDegrees) <= 0.1) {
+			this.currentTiltAngleDegrees = 0;
+			this.applyCurrentTilt();
+			return;
+		}
+
+		const nextAngle = Phaser.Math.Linear(this.currentTiltAngleDegrees, 0, Math.min(1, (delta / 1000) * this.rotationReturnRate));
+		this.currentTiltAngleDegrees = nextAngle;
+		this.applyCurrentTilt();
 	}
 
 	getShapeId() {
@@ -201,7 +194,6 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	}
 
 	private handleDestroy() {
-		this.tiltResetTimer?.remove(false);
 		this.scene.events.off("update", this.handleSceneUpdate, this);
 	}
 

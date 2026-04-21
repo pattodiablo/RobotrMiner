@@ -2,7 +2,6 @@
     "id": "b685c081-ee5f-4b67-b583-415922c9e2c4",
     "sceneType": "SCENE",
     "settings": {
-        "snapEnabled": true,
         "exportClass": true,
         "autoImport": true,
         "preloadPackFiles": [],
@@ -30,6 +29,34 @@
             "originY": 0
         },
         {
+            "type": "Image",
+            "id": "2fa81d06-4907-455e-95e6-5c4820022301",
+            "label": "paredLateral",
+            "texture": {
+                "key": "paredLateral"
+            },
+            "x": 803,
+            "y": 192,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "691afc62-0c45-408a-b157-b3fc0bb1e340",
+                    "label": "body_5",
+                    "positionX": 803,
+                    "positionY": -192,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "1e86f813-9b4b-471e-9b07-b33396579e6a",
+                            "label": "shape_6",
+                            "halfWidth": 39,
+                            "halfHeight": 360
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "b2Body",
             "id": "d0acca49-6823-4e3c-8f42-8cc177e5840d",
             "label": "pared1",
@@ -40,23 +67,6 @@
                     "type": "b2BoxShape",
                     "id": "e6c7b391-e619-4511-a5e5-4891b6a5b36e",
                     "label": "shape",
-                    "restitution": 0.5,
-                    "halfWidth": 100,
-                    "halfHeight": 600
-                }
-            ]
-        },
-        {
-            "type": "b2Body",
-            "id": "7bfa4976-d1ac-4745-a6ac-3d1e03fa66d8",
-            "label": "pared",
-            "positionX": 1139,
-            "positionY": -604,
-            "list": [
-                {
-                    "type": "b2BoxShape",
-                    "id": "be2be1a1-a4de-4dca-ad8e-9e6aa57f0f14",
-                    "label": "shape_2",
                     "restitution": 0.5,
                     "halfWidth": 100,
                     "halfHeight": 600
@@ -82,16 +92,16 @@
             "texture": {
                 "key": "levelBase"
             },
-            "x": 515,
-            "y": 499,
+            "x": 272,
+            "y": 496,
             "list": [
                 {
                     "type": "b2Body",
                     "id": "b2785033-0907-4160-ba1e-9455d41e311a",
                     "label": "body_1",
                     "scope": "CLASS",
-                    "positionX": 515,
-                    "positionY": -499,
+                    "positionX": 272,
+                    "positionY": -496,
                     "list": [
                         {
                             "type": "b2BoxShape",
@@ -203,8 +213,8 @@
                 "y"
             ],
             "label": "leveler",
-            "x": 864,
-            "y": 784
+            "x": 1024,
+            "y": 1248
         },
         {
             "type": "Image",
@@ -214,7 +224,7 @@
             "texture": {
                 "key": "levelBase"
             },
-            "x": 512,
+            "x": 272,
             "y": -192,
             "list": [
                 {
@@ -222,7 +232,7 @@
                     "id": "5a9d1be7-8e1e-432c-b947-2bd12a15ae44",
                     "label": "body_4",
                     "scope": "CLASS",
-                    "positionX": 512,
+                    "positionX": 272,
                     "positionY": 192,
                     "list": [
                         {
@@ -257,6 +267,20 @@
             },
             "x": 528,
             "y": -208
+        },
+        {
+            "type": "Rectangle",
+            "id": "e04bbdc4-858c-4ab3-8f15-8e72ae8389ca",
+            "label": "dropPlace",
+            "scope": "CLASS",
+            "x": 961,
+            "y": 873,
+            "scaleX": 1.9458565461085149,
+            "scaleY": 2.9950810927399374,
+            "alpha": 0,
+            "isFilled": true,
+            "width": 128,
+            "height": 128
         }
     ],
     "plainObjects": [],

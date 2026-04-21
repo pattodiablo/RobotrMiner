@@ -80,6 +80,23 @@ export default class Level extends Phaser.Scene {
 		background.scaleY = 1.3284569248044262;
 		background.setOrigin(0, 0);
 
+		// paredLateral
+		const paredLateral = this.add.image(803, 192, "paredLateral");
+
+		// body_5
+		const body_5 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(803, -192)
+		});
+
+		// add body_5 to paredLateral
+		AddSpriteToWorld(this.worldId, paredLateral, { bodyId: body_5 });
+
+		// shape_6
+		const shape_6 = b2CreatePolygonShape(body_5, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(39), pxm(360)));
+
 		// pared1
 		const pared1 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
@@ -92,29 +109,17 @@ export default class Level extends Phaser.Scene {
 			restitution: 0.5
 		}, b2MakeBox(pxm(100), pxm(600)));
 
-		// pared
-		const pared = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			position: pxmVec2(1139, -604)
-		});
-
-		// shape_2
-		const shape_2 = b2CreatePolygonShape(pared, { 
-			...b2DefaultShapeDef(), 
-			restitution: 0.5
-		}, b2MakeBox(pxm(100), pxm(600)));
-
 		// coin
 		const coin = new Coin(this, -252, 129);
 		this.add.existing(coin);
 
 		// levelBase
-		const levelBase = this.add.image(515, 499, "levelBase");
+		const levelBase = this.add.image(272, 496, "levelBase");
 
 		// body_1
 		const body_1 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(515, -499)
+			position: pxmVec2(272, -496)
 		});
 
 		// add body_1 to levelBase
@@ -124,10 +129,6 @@ export default class Level extends Phaser.Scene {
 		const shape_1 = b2CreatePolygonShape(body_1, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
-		const levelBaseFilter = b2DefaultFilter();
-		levelBaseFilter.categoryBits = 0x0040;
-		levelBaseFilter.maskBits = 0xffff;
-		b2Shape_SetFilter(shape_1, levelBaseFilter);
 
 		// levelBase2
 		const levelBase2 = this.add.image(515, 1132, "levelBase");
@@ -145,10 +146,6 @@ export default class Level extends Phaser.Scene {
 		const shape_3 = b2CreatePolygonShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
-		const levelBase2Filter = b2DefaultFilter();
-		levelBase2Filter.categoryBits = 0x0080;
-		levelBase2Filter.maskBits = 0xffff;
-		b2Shape_SetFilter(shape_3, levelBase2Filter);
 
 		// processBtn
 		const processBtn = this.add.image(515, 494, "ProcessBtn");
@@ -172,16 +169,16 @@ export default class Level extends Phaser.Scene {
 		powerMachine.scaleY = 0.7614161849074168;
 
 		// leveler
-		const leveler = new Leveler(this, 864, 784);
+		const leveler = new Leveler(this, 1024, 1248);
 		this.add.existing(leveler);
 
 		// levelBase3
-		const levelBase3 = this.add.image(512, -192, "levelBase");
+		const levelBase3 = this.add.image(272, -192, "levelBase");
 
 		// body_4
 		const body_4 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(512, 192)
+			position: pxmVec2(272, 192)
 		});
 
 		// add body_4 to levelBase3
@@ -191,16 +188,19 @@ export default class Level extends Phaser.Scene {
 		const shape_5 = b2CreatePolygonShape(body_4, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
-		const levelBase3Filter = b2DefaultFilter();
-		levelBase3Filter.categoryBits = 0x0020;
-		levelBase3Filter.maskBits = 0xffff;
-		b2Shape_SetFilter(shape_5, levelBase3Filter);
 
 		// checkBtn
 		const checkBtn = this.add.image(112, 496, "CheckBtn");
 
 		// returnBtn2
 		const returnBtn2 = this.add.image(528, -208, "ReturnBtn");
+
+		// dropPlace
+		const dropPlace = this.add.rectangle(961, 873, 128, 128);
+		dropPlace.scaleX = 1.9458565461085149;
+		dropPlace.scaleY = 2.9950810927399374;
+		dropPlace.alpha = 0;
+		dropPlace.isFilled = true;
 
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
@@ -213,6 +213,7 @@ export default class Level extends Phaser.Scene {
 		this.levelBase3 = levelBase3;
 		this.checkBtn = checkBtn;
 		this.returnBtn2 = returnBtn2;
+		this.dropPlace = dropPlace;
 
 		this.events.emit("scene-awake");
 	}
@@ -234,6 +235,7 @@ export default class Level extends Phaser.Scene {
 	private levelBase3!: Phaser.GameObjects.Image;
 	private checkBtn!: Phaser.GameObjects.Image;
 	private returnBtn2!: Phaser.GameObjects.Image;
+	private dropPlace!: Phaser.GameObjects.Rectangle;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -271,6 +273,7 @@ export default class Level extends Phaser.Scene {
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
+	private levelBaseInitialX = 0;
 	private levelBaseBodyId!: any;
 	private maxGemLevelReached = 0;
 	private levelBase2BodyId!: any;
@@ -328,6 +331,7 @@ export default class Level extends Phaser.Scene {
 		this.input.on("pointerup", this.handlePointerUp, this);
 		this.scheduleNextRockSpawn();
 		this.debugToggleKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3);
+		this.levelBaseInitialX = this.levelBase.x;
 
 		this.levelBaseBodyId = this.body_1;
 		this.levelBase2BodyId = this.body_2; 
@@ -739,7 +743,7 @@ export default class Level extends Phaser.Scene {
 		this.processBtn.disableInteractive();
 		this.returnBtn.disableInteractive();
 		this.levelAutoCloseTimer?.remove(false);
-		const targetX = this.levelBase.x - (this.scale.width + this.levelOpenShiftX);
+		const targetX = this.levelBaseInitialX - (this.scale.width + this.levelOpenShiftX);
 		const targetScrollY = this.initialCameraScrollY + this.levelOpenCameraOffset;
 
 		this.animateLevelBase(targetX, targetScrollY, () => {
@@ -762,7 +766,7 @@ export default class Level extends Phaser.Scene {
 		this.levelOpened = false;
 		this.returnBtn.disableInteractive();
 		this.processBtn.disableInteractive();
-		const targetX = 515;
+		const targetX = this.levelBaseInitialX;
 		const targetScrollY = this.initialCameraScrollY;
 
 		this.animateLevelBase(targetX, targetScrollY, () => {
@@ -785,7 +789,7 @@ export default class Level extends Phaser.Scene {
 		this.levelAutoCloseTimer?.remove(false);
 		this.levelAutoCloseTimer = undefined;
 		this.returnBtn.disableInteractive();
-		const targetX = 515;
+		const targetX = this.levelBaseInitialX;
 		const targetScrollY = restoreCamera ? this.initialCameraScrollY : this.cameras.main.scrollY;
 
 		this.processBtn.disableInteractive();
