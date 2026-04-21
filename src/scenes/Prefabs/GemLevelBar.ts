@@ -65,6 +65,10 @@ export default class GemLevelBar extends Phaser.GameObjects.Container {
 		});
 	}
 
+	resetMaxGemLevel() {
+		this.setMaxGemLevel(0);
+	}
+
 	/* END-USER-CODE */
 }
 

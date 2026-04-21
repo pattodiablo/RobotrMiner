@@ -264,6 +264,19 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.breakRock();
 	}
 
+	cleanupIfBelowY(limitY: number) {
+		if (this.destroyed) {
+			return false;
+		}
+
+		if (this.y <= limitY) {
+			return false;
+		}
+
+		this.destroyRockSilently();
+		return true;
+	}
+
 	breakOnSecondLevel() {
 		if (this.destroyed) {
 			return;
@@ -290,8 +303,11 @@ export default class Roca extends Phaser.GameObjects.Image {
 	}
 
 	private spawnGemReward() {
+		const maxGemLevelReached = (this.scene as any).getMaxGemLevelReached?.() ?? 1;
+		const rewardGemLevel = Phaser.Math.Clamp(Math.floor(maxGemLevelReached), 1, 14);
+		const gemTextureKey = `gem${Phaser.Math.Between(1, rewardGemLevel)}`;
 		const gem = new Gema(this.scene, this.x, this.y);
-		gem.configureBirthTexture("gem1");
+		gem.configureBirthTexture(gemTextureKey);
 		this.scene.add.existing(gem);
 		this.applyBreakImpulse(gem, Math.random() < 0.5 ? -1 : 1, 2 + Math.random() * 0.5);
 		(this.scene as any).registerGem?.(gem);
@@ -334,6 +350,13 @@ export default class Roca extends Phaser.GameObjects.Image {
 		RemoveSpriteFromWorld((this.scene as any).worldId, this, false);
 		b2DestroyBody(this.bodyId);
 		this.bodyId = null;
+	}
+
+	private destroyRockSilently() {
+		this.destroyed = true;
+		this.collisionBreakArmed = false;
+		this.removeFromWorld();
+		this.destroySprite();
 	}
 
 	private destroySprite() {

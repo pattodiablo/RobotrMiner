@@ -67,6 +67,7 @@ export default class Robot extends SpineGameObject {
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body_1 });
 		this.homePosition = pxmVec2(this.x, -this.y);
 		this.targetPosition = pxmVec2(this.x, -this.y);
+		this.setDepth(3000);
 		this.animationState.setAnimation(0, "idle", true);
 		this.scene.events.on("update", this.handleSceneUpdate, this);
 		this.scene.events.on("robot-gem-stolen", this.handleGemStolen, this);
@@ -193,7 +194,7 @@ export default class Robot extends SpineGameObject {
 
 		this.isGrabbing = true;
 		this.heldGem = gem;
-		this.pickupTarget = { x: x ?? gem.x, y: (y ?? gem.y) - 100 };
+		this.pickupTarget = { x: gem.x, y: gem.y - 100 };
 		this.moveTo(this.pickupTarget.x, this.pickupTarget.y);
 	}
 

@@ -374,8 +374,9 @@ export default class Gema extends Phaser.GameObjects.Image {
 				b2Body_SetAwake(this.bodyId, true);
 			},
 			onComplete: () => {
+				(this.scene as any).addReactorEnergy?.(this.getRewardValue());
 				(this.scene as any).spawnRewardCoins?.(startX, startY, this.getRewardValue(), 6);
-				this.destroyGem(true);
+				this.destroyGem(false);
 			},
 		});
 
@@ -463,6 +464,19 @@ export default class Gema extends Phaser.GameObjects.Image {
 		}
 		this.mouseCarried = false;
 		super.destroy();
+	}
+
+	cleanupIfBelowY(limitY: number) {
+		if (this.destroyed || this.held || this.mouseCarried || this.merging || this.consuming) {
+			return false;
+		}
+
+		if (this.y <= limitY) {
+			return false;
+		}
+
+		this.destroyGem(false);
+		return true;
 	}
 
 	private createCollisionPoints() {

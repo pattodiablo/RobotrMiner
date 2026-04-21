@@ -266,6 +266,11 @@ export default class Level extends Phaser.Scene {
 	private moneyDisplayValue = 0;
 	private moneyText!: Phaser.GameObjects.Text;
 	private moneyTween?: Phaser.Tweens.Tween;
+	private reactorEnergy = 100;
+	private reactorEnergyText!: Phaser.GameObjects.Text;
+	private reactorEnergyBarBg!: Phaser.GameObjects.Rectangle;
+	private reactorEnergyBarFill!: Phaser.GameObjects.Rectangle;
+	private readonly reactorEnergyDrainPerSecond = 0.625;
 
 	private readonly rockSpawnMinDelay = 2600;
 	private readonly rockSpawnMaxDelay = 7500;
@@ -275,7 +280,7 @@ export default class Level extends Phaser.Scene {
 	private readonly levelerSpawnX = 960;
 	private readonly levelerSpawnY = 1312;
 	private readonly levelerSpawnInterval = 10000;
-	private readonly maxLevelerInstances = 6;
+	private readonly maxLevelerInstances = 12;
 	private debugCanvas: HTMLCanvasElement | null = null;
 	private debugContext: CanvasRenderingContext2D | null = null;
 	private debugDraw: any = null;
@@ -344,6 +349,7 @@ export default class Level extends Phaser.Scene {
 		this.scheduleLevelerSpawns();
 		this.setupBox2DDebug();
 		this.createMoneyHud();
+		this.createReactorHud();
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
 		this.input.on("pointermove", this.handlePointerMove, this);
 		this.input.on("pointerup", this.handlePointerUp, this);
@@ -363,10 +369,12 @@ export default class Level extends Phaser.Scene {
 		}
 
 		this.updateCarriedGem();
+		this.updateReactorEnergy(delta);
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.handleSecondLevelRocks();
 		this.handleGemMerges();
 		this.handleGeneratorCoreGems();
+		this.cleanupFallenObjects();
 		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
@@ -530,6 +538,15 @@ export default class Level extends Phaser.Scene {
 		this.levelBar.setMaxGemLevel(this.maxGemLevelReached);
 	}
 
+	public getMaxGemLevelReached() {
+		return Math.max(1, this.maxGemLevelReached);
+	}
+
+	private resetGemUnlockProgress() {
+		this.maxGemLevelReached = 0;
+		this.levelBar.resetMaxGemLevel();
+	}
+
 	public unregisterGem(gem: Gema) {
 		this.gems = this.gems.filter((currentGem) => currentGem !== gem);
 		if (this.carriedGem === gem) {
@@ -622,6 +639,53 @@ export default class Level extends Phaser.Scene {
 			yoyo: true,
 			ease: "Sine.easeOut",
 		});
+	}
+
+	private createReactorHud() {
+		this.reactorEnergyText = this.add.text(16, 78, this.formatReactorEnergy(), {
+			fontFamily: "Courier New, monospace",
+			fontSize: "22px",
+			color: "#8ef7b2",
+			stroke: "#0d1d12",
+			strokeThickness: 5,
+			align: "left",
+		});
+		this.reactorEnergyText.setScrollFactor(0);
+		this.reactorEnergyText.setDepth(2000);
+
+		this.reactorEnergyBarBg = this.add.rectangle(16, 112, 220, 16, 0x1a1205, 0.9);
+		this.reactorEnergyBarBg.setOrigin(0, 0.5);
+		this.reactorEnergyBarBg.setScrollFactor(0);
+		this.reactorEnergyBarBg.setDepth(1999);
+
+		this.reactorEnergyBarFill = this.add.rectangle(16, 112, 220, 16, 0x59d98a, 1);
+		this.reactorEnergyBarFill.setOrigin(0, 0.5);
+		this.reactorEnergyBarFill.setScrollFactor(0);
+		this.reactorEnergyBarFill.setDepth(2000);
+		this.updateReactorHud();
+	}
+
+	public addReactorEnergy(gemValue: number) {
+		const energyGain = Math.max(2, Math.round(gemValue / 5));
+		this.reactorEnergy = Math.min(100, this.reactorEnergy + energyGain);
+		this.updateReactorHud();
+	}
+
+	private updateReactorEnergy(delta: number) {
+		this.reactorEnergy = Math.max(0, this.reactorEnergy - this.reactorEnergyDrainPerSecond * (delta / 1000));
+		this.updateReactorHud();
+	}
+
+	private updateReactorHud() {
+		const energyPercent = Math.round(this.reactorEnergy);
+		this.reactorEnergyText.setText(this.formatReactorEnergy());
+		this.reactorEnergyBarFill.setScale(energyPercent / 100, 1);
+		const fillColor = energyPercent > 66 ? 0x59d98a : energyPercent > 33 ? 0xf7c548 : 0xf26d6d;
+		this.reactorEnergyBarFill.setFillStyle(fillColor, 1);
+	}
+
+	private formatReactorEnergy() {
+		return `REACTOR ${Math.round(this.reactorEnergy)}%`;
 	}
 
 	private setupProcessButton() {
@@ -772,6 +836,7 @@ export default class Level extends Phaser.Scene {
 
 		this.generatorReviewActive = false;
 		this.wakeProcessBodies();
+		this.resetGemUnlockProgress();
 		this.levelOpened = true;
 		this.processBtn.disableInteractive();
 		this.returnBtn.disableInteractive();
@@ -923,6 +988,22 @@ export default class Level extends Phaser.Scene {
 
 	private handleRockImpacts() {
 		return;
+	}
+
+	private cleanupFallenObjects() {
+		const cleanupY = this.levelBase.y + this.scale.height * 2;
+
+		for (const gem of [...this.gems]) {
+			(gem as any).cleanupIfBelowY?.(cleanupY);
+		}
+
+		for (const child of [...this.children.list]) {
+			if (!(child instanceof Roca)) {
+				continue;
+			}
+
+			(child as any).cleanupIfBelowY?.(cleanupY);
+		}
 	}
 
 
