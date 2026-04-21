@@ -63,6 +63,10 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		const shape_4 = b2CreatePolygonShape(body_3, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(114.5), pxm(38)));
+		const levelerFilter = b2DefaultFilter();
+		levelerFilter.categoryBits = 0x0010;
+		levelerFilter.maskBits = 0xffff & ~0x0008;
+		b2Shape_SetFilter(shape_4, levelerFilter);
 		this.bodyId = body_3;
 		this.shapeId = shape_4;
 		this.startX = b2Body_GetPosition(body_3).x;
@@ -88,6 +92,10 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private startX!: number;
 	private startY!: number;
 	private movementPhase = 0;
+	private tiltApplied = false;
+	private tiltResetTimer?: Phaser.Time.TimerEvent;
+	private readonly tiltAngleDegrees = 16;
+	private readonly tiltHoldDuration = 2600;
 
 	private handleSceneUpdate() {
 		if (!this.bodyId) {
@@ -102,6 +110,7 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				this.setBodyPosition(position.x, this.targetY);
 				this.setBodyVelocity(0, 0);
 				this.movementPhase = 1;
+				this.tiltApplied = false;
 				b2Body_SetAngularVelocity(this.bodyId, 0);
 				return;
 			}
@@ -118,10 +127,15 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				this.setBodyPosition(this.targetX, position.y);
 				this.setBodyVelocity(0, 0);
 				this.movementPhase = 2;
+				this.resetTilt();
 				b2Body_SetAngularVelocity(this.bodyId, 0);
 				return;
 			}
 
+			if (!this.tiltApplied) {
+				this.applyTilt();
+				this.tiltApplied = true;
+			}
 			this.setBodyVelocity(Math.sign(deltaX) * this.travelSpeed, 0);
 			b2Body_SetAngularVelocity(this.bodyId, 0);
 			return;
@@ -149,6 +163,8 @@ export default class Leveler extends Phaser.GameObjects.Image {
 			this.setBodyPosition(this.startX, this.startY);
 			this.setBodyVelocity(0, 0);
 			this.movementPhase = 0;
+			this.resetTilt();
+			this.tiltApplied = false;
 			b2Body_SetAngularVelocity(this.bodyId, 0);
 			return;
 		}
@@ -161,6 +177,21 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(0));
 	}
 
+	private applyTilt() {
+		this.tiltResetTimer?.remove(false);
+		const angle = Phaser.Math.DegToRad(this.tiltAngleDegrees);
+		b2Body_SetTransform(this.bodyId, b2Body_GetPosition(this.bodyId), b2MakeRot(angle));
+		this.tiltResetTimer = this.scene.time.delayedCall(this.tiltHoldDuration, () => {
+			this.resetTilt();
+		});
+	}
+
+	private resetTilt() {
+		this.tiltResetTimer?.remove(false);
+		this.tiltResetTimer = undefined;
+		b2Body_SetTransform(this.bodyId, b2Body_GetPosition(this.bodyId), b2MakeRot(0));
+	}
+
 	getShapeId() {
 		return this.shapeId;
 	}
@@ -170,6 +201,7 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	}
 
 	private handleDestroy() {
+		this.tiltResetTimer?.remove(false);
 		this.scene.events.off("update", this.handleSceneUpdate, this);
 	}
 

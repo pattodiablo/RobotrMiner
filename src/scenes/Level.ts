@@ -21,6 +21,7 @@ import {
 	b2BodyType,
 	b2Body_SetTransform,
 	b2Body_SetType,
+	b2DefaultFilter,
 	SetWorldScale,
 	UpdateWorldSprites,
 	WorldStep,
@@ -41,6 +42,7 @@ import {
 	b2DebugDraw as PhaserDebugDraw,
 	b2World_GetContactEvents,
 	b2World_Draw,
+	b2Shape_SetFilter,
 
 	b2Vec2,
 	pxm,
@@ -122,6 +124,10 @@ export default class Level extends Phaser.Scene {
 		const shape_1 = b2CreatePolygonShape(body_1, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
+		const levelBaseFilter = b2DefaultFilter();
+		levelBaseFilter.categoryBits = 0x0040;
+		levelBaseFilter.maskBits = 0xffff;
+		b2Shape_SetFilter(shape_1, levelBaseFilter);
 
 		// levelBase2
 		const levelBase2 = this.add.image(515, 1132, "levelBase");
@@ -139,6 +145,10 @@ export default class Level extends Phaser.Scene {
 		const shape_3 = b2CreatePolygonShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
+		const levelBase2Filter = b2DefaultFilter();
+		levelBase2Filter.categoryBits = 0x0080;
+		levelBase2Filter.maskBits = 0xffff;
+		b2Shape_SetFilter(shape_3, levelBase2Filter);
 
 		// processBtn
 		const processBtn = this.add.image(515, 494, "ProcessBtn");
@@ -161,12 +171,30 @@ export default class Level extends Phaser.Scene {
 		powerMachine.scaleX = 0.7614161849074168;
 		powerMachine.scaleY = 0.7614161849074168;
 
-		// levelBase3
-		const levelBase3 = this.add.image(512, -208, "levelBase");
-
 		// leveler
 		const leveler = new Leveler(this, 864, 784);
 		this.add.existing(leveler);
+
+		// levelBase3
+		const levelBase3 = this.add.image(512, -192, "levelBase");
+
+		// body_4
+		const body_4 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(512, 192)
+		});
+
+		// add body_4 to levelBase3
+		AddSpriteToWorld(this.worldId, levelBase3, { bodyId: body_4 });
+
+		// shape_5
+		const shape_5 = b2CreatePolygonShape(body_4, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(570.5), pxm(60)));
+		const levelBase3Filter = b2DefaultFilter();
+		levelBase3Filter.categoryBits = 0x0020;
+		levelBase3Filter.maskBits = 0xffff;
+		b2Shape_SetFilter(shape_5, levelBase3Filter);
 
 		// checkBtn
 		const checkBtn = this.add.image(112, 496, "CheckBtn");
@@ -181,6 +209,7 @@ export default class Level extends Phaser.Scene {
 		this.processBtn = processBtn;
 		this.returnBtn = returnBtn;
 		this.levelBar = levelBar;
+		this.body_4 = body_4;
 		this.levelBase3 = levelBase3;
 		this.checkBtn = checkBtn;
 		this.returnBtn2 = returnBtn2;
@@ -201,6 +230,7 @@ export default class Level extends Phaser.Scene {
 	private processBtn!: Phaser.GameObjects.Image;
 	private returnBtn!: Phaser.GameObjects.Image;
 	private levelBar!: GemLevelBar;
+	private body_4!: b2BodyId;
 	private levelBase3!: Phaser.GameObjects.Image;
 	private checkBtn!: Phaser.GameObjects.Image;
 	private returnBtn2!: Phaser.GameObjects.Image;

@@ -11,11 +11,13 @@ import {
 	AddSpriteToWorld,
 	RemoveSpriteFromWorld,
 	b2DestroyShape,
+	b2DefaultFilter,
 	b2BodyType,
 	b2CreateBody,
 	b2DestroyBody,
 	b2DefaultBodyDef,
 	b2DefaultShapeDef,
+	b2Shape_SetFilter,
 	b2Body_SetLinearVelocity,
 	b2Body_SetAngularVelocity,
 	b2CreateCircleShape,
@@ -54,6 +56,10 @@ export default class Roca extends Phaser.GameObjects.Image {
 		const shape_3 = b2CreateCircleShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, new b2Circle(new b2Vec2(pxm(0), pxm(0)), pxm(70)));
+		const rockFilter = b2DefaultFilter();
+		rockFilter.categoryBits = 0x0008;
+		rockFilter.maskBits = 0xffff;
+		b2Shape_SetFilter(shape_3, rockFilter);
 		b2Shape_EnableContactEvents(shape_3, true);
 
 		/* START-USER-CTR-CODE */

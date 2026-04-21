@@ -1,4 +1,3 @@
-
 // You can write more code here
 
 /* START OF COMPILED CODE */
@@ -59,10 +58,6 @@ const BIRTH_TEXTURE_KEYS = [
 	"gem14",
 ] as const;
 
-function getRandomBirthTextureKey() {
-	return BIRTH_TEXTURE_KEYS[Math.floor(Math.random() * BIRTH_TEXTURE_KEYS.length)];
-}
-
 /* END-USER-IMPORTS */
 
 export default class Gema extends Phaser.GameObjects.Image {
@@ -70,27 +65,23 @@ export default class Gema extends Phaser.GameObjects.Image {
 	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string) {
 		super(scene, x ?? 0, y ?? 0, "gem1", frame);
 
-		// body
-		const body = b2CreateBody((this.scene as any).worldId, { 
-			...b2DefaultBodyDef(), 
-			type: b2BodyType.b2_dynamicBody, 
-			position: pxmVec2(this.x, -this.y), 
+		const body = b2CreateBody((this.scene as any).worldId, {
+			...b2DefaultBodyDef(),
+			type: b2BodyType.b2_dynamicBody,
+			position: pxmVec2(this.x, -this.y),
 			gravityScale: 10
 		});
 
-		// add body to this
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body });
 		this.bodyId = body;
 
-		// shape
-		const shape = b2CreatePolygonShape(body, { 
+		const shape = b2CreatePolygonShape(body, {
 			...b2DefaultShapeDef()
 		}, b2MakeOffsetPolygon(b2ComputeHull(this.createCollisionPoints(), 4), pxm(0), new b2Transform(new b2Vec2(pxm(0), pxm(0)), b2MakeRot(0))));
 		this.shapeId = shape;
 		b2Shape_EnableContactEvents(this.shapeId, true);
 
 		/* START-USER-CTR-CODE */
-		// Write your code here.
 		this.setInteractive({ useHandCursor: true });
 		this.on("pointerdown", () => {
 			this.scene.events.emit("gema-drag-start", this);
@@ -100,7 +91,6 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 	/* START-USER-CODE */
 
-	// Write your code here.
 	private bodyId!: any;
 	private shapeId!: any;
 	private readonly dynamicBodyType = b2BodyType.b2_dynamicBody;

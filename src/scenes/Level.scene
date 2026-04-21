@@ -196,17 +196,6 @@
             "scaleY": 0.7614161849074168
         },
         {
-            "type": "Image",
-            "id": "b602a03c-69e0-4e64-9f23-947549c8bc45",
-            "label": "levelBase3",
-            "scope": "CLASS",
-            "texture": {
-                "key": "levelBase"
-            },
-            "x": 512,
-            "y": -208
-        },
-        {
             "prefabId": "73295e25-6562-4f3b-b914-5930ee89acca",
             "id": "b37dde21-0afb-4a66-ba1c-15c7ee313fad",
             "unlock": [
@@ -216,6 +205,36 @@
             "label": "leveler",
             "x": 864,
             "y": 784
+        },
+        {
+            "type": "Image",
+            "id": "aa04374e-cb43-46bc-92b1-5826b80dc5cf",
+            "label": "levelBase3",
+            "scope": "CLASS",
+            "texture": {
+                "key": "levelBase"
+            },
+            "x": 512,
+            "y": -192,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "5a9d1be7-8e1e-432c-b947-2bd12a15ae44",
+                    "label": "body_4",
+                    "scope": "CLASS",
+                    "positionX": 512,
+                    "positionY": 192,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "a49e3b63-b8ba-45b9-805e-c5a53635768c",
+                            "label": "shape_5",
+                            "halfWidth": 570.5,
+                            "halfHeight": 60
+                        }
+                    ]
+                }
+            ]
         },
         {
             "type": "Image",
