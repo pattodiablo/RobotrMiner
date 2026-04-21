@@ -172,19 +172,6 @@ export default class Gema extends Phaser.GameObjects.Image {
 		return !this.reservedByRobotBodyId || this.reservedByRobotBodyId === robotBodyId;
 	}
 
-	canBeTransportedByLeveler() {
-		return !this.destroyed && !this.merging && !this.mouseCarried && !this.held && !this.reservedByRobotBodyId;
-	}
-
-	beginLevelerCarry(levelerBodyId: any) {
-		if (!this.canBeTransportedByLeveler()) {
-			return false;
-		}
-
-		this.beginHold(levelerBodyId);
-		return true;
-	}
-
 	reserveForRobot(robotBodyId: any) {
 		if (this.destroyed || this.merging || this.mouseCarried || this.held) {
 			return false;

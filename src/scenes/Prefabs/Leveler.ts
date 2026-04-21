@@ -88,7 +88,6 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private startX!: number;
 	private startY!: number;
 	private movementPhase = 0;
-	private carriedGem: any = null;
 
 	private handleSceneUpdate() {
 		if (!this.bodyId) {
@@ -164,23 +163,6 @@ export default class Leveler extends Phaser.GameObjects.Image {
 
 	getShapeId() {
 		return this.shapeId;
-	}
-
-	canCarryGem() {
-		return this.carriedGem === null;
-	}
-
-	tryCarryGem(gem: any) {
-		if (!this.canCarryGem()) {
-			return false;
-		}
-
-		if (!gem?.beginLevelerCarry?.(this.bodyId)) {
-			return false;
-		}
-
-		this.carriedGem = gem;
-		return true;
 	}
 
 	private setBodyVelocity(x: number, y: number) {

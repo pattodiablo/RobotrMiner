@@ -314,7 +314,6 @@ export default class Level extends Phaser.Scene {
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.handleSecondLevelRocks();
 		this.handleGemMerges();
-		this.handleLevelerGemPickup();
 		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
@@ -857,44 +856,6 @@ export default class Level extends Phaser.Scene {
 
 	private handleRockImpacts() {
 		return;
-	}
-
-	private handleLevelerGemPickup() {
-		const contactEvents = b2World_GetContactEvents(this.worldId);
-		if (!contactEvents.beginEvents || contactEvents.beginCount === 0) {
-			return;
-		}
-
-		for (let index = 0; index < contactEvents.beginCount; index += 1) {
-			const contact = contactEvents.beginEvents[index];
-			const leveler = this.findLevelerByShapeId(contact.shapeIdA) ?? this.findLevelerByShapeId(contact.shapeIdB);
-			const gem = this.findGemByShapeId(contact.shapeIdA) ?? this.findGemByShapeId(contact.shapeIdB);
-
-			if (!leveler || !gem) {
-				continue;
-			}
-
-			if (!leveler.canCarryGem?.() || !gem.canBeTransportedByLeveler?.()) {
-				continue;
-			}
-
-			leveler.tryCarryGem?.(gem);
-		}
-	}
-
-	private findLevelerByShapeId(shapeId: any) {
-		for (const object of this.children.list) {
-			if (!(object instanceof Leveler)) {
-				continue;
-			}
-
-			const levelerShapeId = object.getShapeId?.();
-			if (levelerShapeId && this.sameShapeId(levelerShapeId, shapeId)) {
-				return object;
-			}
-		}
-
-		return null;
 	}
 
 	private findGemByShapeId(shapeId: any) {
