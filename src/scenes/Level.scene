@@ -281,6 +281,32 @@
             "isFilled": true,
             "width": 128,
             "height": 128
+        },
+        {
+            "type": "Ellipse",
+            "id": "017ad873-a2c4-4e87-a73c-f86c3c0f942c",
+            "label": "generatorCore",
+            "scope": "CLASS",
+            "x": 494,
+            "y": -456,
+            "alpha": 0,
+            "isFilled": true,
+            "width": 132,
+            "height": 132
+        },
+        {
+            "type": "Rectangle",
+            "id": "9b19bfbc-8987-4ee9-afab-11d3c3e9be2d",
+            "label": "rockGenZone",
+            "scope": "CLASS",
+            "x": 388,
+            "y": -67,
+            "scaleX": 5.26101723313505,
+            "scaleY": -0.38227944214497694,
+            "alpha": 0,
+            "isFilled": true,
+            "width": 128,
+            "height": 128
         }
     ],
     "plainObjects": [],

@@ -20,6 +20,7 @@ import {
 	DYNAMIC,
 	b2BodyType,
 	b2Body_SetTransform,
+	b2Body_SetAwake,
 	b2Body_SetType,
 	b2DefaultFilter,
 	SetWorldScale,
@@ -202,6 +203,18 @@ export default class Level extends Phaser.Scene {
 		dropPlace.alpha = 0;
 		dropPlace.isFilled = true;
 
+		// generatorCore
+		const generatorCore = this.add.ellipse(494, -456, 132, 132);
+		generatorCore.alpha = 0;
+		generatorCore.isFilled = true;
+
+		// rockGenZone
+		const rockGenZone = this.add.rectangle(388, -67, 128, 128);
+		rockGenZone.scaleX = 5.26101723313505;
+		rockGenZone.scaleY = -0.38227944214497694;
+		rockGenZone.alpha = 0;
+		rockGenZone.isFilled = true;
+
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
 		this.body_2 = body_2;
@@ -214,6 +227,8 @@ export default class Level extends Phaser.Scene {
 		this.checkBtn = checkBtn;
 		this.returnBtn2 = returnBtn2;
 		this.dropPlace = dropPlace;
+		this.generatorCore = generatorCore;
+		this.rockGenZone = rockGenZone;
 
 		this.events.emit("scene-awake");
 	}
@@ -236,6 +251,8 @@ export default class Level extends Phaser.Scene {
 	private checkBtn!: Phaser.GameObjects.Image;
 	private returnBtn2!: Phaser.GameObjects.Image;
 	private dropPlace!: Phaser.GameObjects.Rectangle;
+	private generatorCore!: Phaser.GameObjects.Ellipse;
+	private rockGenZone!: Phaser.GameObjects.Rectangle;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -273,6 +290,7 @@ export default class Level extends Phaser.Scene {
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
+	private generatorReviewActive = false;
 	private levelBaseInitialX = 0;
 	private levelBaseBodyId!: any;
 	private maxGemLevelReached = 0;
@@ -348,6 +366,7 @@ export default class Level extends Phaser.Scene {
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.handleSecondLevelRocks();
 		this.handleGemMerges();
+		this.handleGeneratorCoreGems();
 		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
@@ -522,15 +541,21 @@ export default class Level extends Phaser.Scene {
 		return this.carriedGem !== null;
 	}
 
-	public spawnRewardCoins(x: number, y: number, gemValue: number) {
+	public spawnRewardCoins(x: number, y: number, gemValue: number, burstStrength = 4) {
 		const coinCount = Math.max(1, Math.min(8, Math.floor(Math.log2(Math.max(1, gemValue / 10))) + 1));
-		const horizontalSpread = 28;
-		const verticalStart = 120;
+		const angleOffset = Math.random() * Math.PI * 2;
 
 		for (let index = 0; index < coinCount; index += 1) {
-			const offsetX = (Math.random() * 2 - 1) * horizontalSpread;
-			const offsetY = Math.random() * 40;
-			const coin = new Coin(this, x + offsetX, -(verticalStart + offsetY), "coin", undefined, this.splitGemValue(gemValue, coinCount, index));
+			const angle = angleOffset + (index / coinCount) * Math.PI * 2;
+			const spreadDistance = 10 + Math.random() * 18;
+			const speed = burstStrength * (0.75 + Math.random() * 0.75);
+			const coinX = x + Math.cos(angle) * spreadDistance;
+			const coinY = y + Math.sin(angle) * spreadDistance;
+			const velocity = {
+				x: Math.cos(angle) * speed,
+				y: Math.sin(angle) * speed,
+			};
+			const coin = new Coin(this, coinX, coinY, "coin", undefined, this.splitGemValue(gemValue, coinCount, index), velocity);
 			this.add.existing(coin);
 		}
 	}
@@ -690,6 +715,7 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private moveCameraUp() {
+		this.generatorReviewActive = true;
 		this.checkCameraTween?.stop();
 
 		const startScrollY = this.cameras.main.scrollY;
@@ -712,6 +738,7 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private moveCameraDown() {
+		this.generatorReviewActive = false;
 		this.checkCameraTween?.stop();
 
 		const startScrollY = this.cameras.main.scrollY;
@@ -733,12 +760,18 @@ export default class Level extends Phaser.Scene {
 		});
 	}
 
+	public isGeneratorReviewActive() {
+		return this.generatorReviewActive;
+	}
+
 	private openLevelAccess() {
 
 		if (this.levelOpened) {
 			return;
 		}
 
+		this.generatorReviewActive = false;
+		this.wakeProcessBodies();
 		this.levelOpened = true;
 		this.processBtn.disableInteractive();
 		this.returnBtn.disableInteractive();
@@ -892,6 +925,46 @@ export default class Level extends Phaser.Scene {
 		return;
 	}
 
+
+	private wakeProcessBodies() {
+		for (const gem of this.gems) {
+			const bodyId = (gem as any).bodyId;
+			if (bodyId) {
+				b2Body_SetAwake(bodyId, true);
+			}
+		}
+
+		for (const child of this.children.list) {
+			if (!(child instanceof Roca)) {
+				continue;
+			}
+
+			const bodyId = (child as any).bodyId;
+			if (bodyId) {
+				b2Body_SetAwake(bodyId, true);
+			}
+		}
+	}
+
+	private handleGeneratorCoreGems() {
+		if (!this.generatorReviewActive) {
+			return;
+		}
+
+		const bounds = this.generatorCore.getBounds();
+		for (const gem of this.gems) {
+			if (!gem || (gem as any).destroyed) {
+				continue;
+			}
+
+			if (gem.x < bounds.left || gem.x > bounds.right || gem.y < bounds.top || gem.y > bounds.bottom) {
+				continue;
+			}
+
+			(gem as any).beginGeneratorCoreConsumption?.();
+		}
+	}
+
 	private findGemByShapeId(shapeId: any) {
 		for (const gem of this.gems) {
 			const gemShapeId = gem.getShapeId();
@@ -978,13 +1051,20 @@ export default class Level extends Phaser.Scene {
 			}
 
 			this.rockSpawnCount += 1;
-			const margin = 80;
-			const width = this.scale.width;
-			const x = -margin + Math.random() * (width + margin * 2);
-			const y = -margin - Math.random() * margin;
+			const spawnPoint = this.getRockGenZonePoint();
+			const x = spawnPoint.x;
+			const y = spawnPoint.y;
 			this.spawnRock(x, y);
 			this.scheduleNextRockSpawn();
 		});
+	}
+
+	private getRockGenZonePoint() {
+		const bounds = this.rockGenZone.getBounds();
+		return {
+			x: bounds.left + Math.random() * bounds.width,
+			y: bounds.top + Math.random() * bounds.height,
+		};
 	}
 
 	/* END-USER-CODE */

@@ -35,7 +35,7 @@ export default class Coin extends Phaser.GameObjects.Image {
 	private blinkTween?: Phaser.Tweens.Tween;
 	private readonly coinValue: number;
 
-	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string, coinValue = 1) {
+	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string, coinValue = 1, initialVelocity?: { x: number; y: number }) {
 		super(scene, x ?? 0, y ?? 0, texture || "coin", frame);
 		this.coinValue = coinValue;
 
@@ -50,7 +50,9 @@ export default class Coin extends Phaser.GameObjects.Image {
 		// add body to this
 		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body });
 		this.bodyId = body;
-		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2((Math.random() * 2 - 1) * 2, 1 + Math.random() * 2));
+		const velocityX = initialVelocity?.x ?? (Math.random() * 2 - 1) * 2;
+		const velocityY = initialVelocity?.y ?? 1 + Math.random() * 2;
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(velocityX, velocityY));
 		b2Body_SetAngularVelocity(this.bodyId, (Math.random() * 2 - 1) * 6);
 		this.setScale(0.85);
 		this.setDepth(1000);

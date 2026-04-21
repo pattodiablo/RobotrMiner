@@ -104,6 +104,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 	private mergeTween?: Phaser.Tweens.Tween;
 	private mouseCarried = false;
 	private collisionsDisabled = false;
+	private consuming = false;
 	private secondLevelMinY = Number.POSITIVE_INFINITY;
 
 	setSecondLevelMinY(minY: number) {
@@ -147,20 +148,31 @@ export default class Gema extends Phaser.GameObjects.Image {
 	}
 
 	canMerge() {
-		return !this.destroyed && !this.merging && !this.mouseCarried;
+		return !this.destroyed && !this.merging && !this.consuming;
 	}
 
 	canBeTargetedByRobot(robotBodyId: any) {
-		if (this.destroyed || this.merging || this.mouseCarried || this.held) {
+		if (this.destroyed || this.merging || this.mouseCarried || this.held || this.consuming) {
 			return false;
 		}
 
-		if (this.isInsideDropPlace()) {
-			return false;
-		}
+		const isGeneratorReviewActive = (this.scene as any).isGeneratorReviewActive?.();
+		if (isGeneratorReviewActive) {
+			if (!this.isInsideLevelBase3()) {
+				return false;
+			}
 
-		if (!this.isInSecondLevel()) {
-			return false;
+			if (this.isInsideGeneratorCore()) {
+				return false;
+			}
+		} else {
+			if (this.isInsideDropPlace()) {
+				return false;
+			}
+
+			if (!this.isInSecondLevel()) {
+				return false;
+			}
 		}
 
 		return !this.reservedByRobotBodyId || this.reservedByRobotBodyId === robotBodyId;
@@ -235,7 +247,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 	}
 
 	beginMergeAttraction(targetX: number, targetY: number, durationMs = 220) {
-		if (this.destroyed || this.merging) {
+		if (this.destroyed || this.merging || this.consuming) {
 			return;
 		}
 
@@ -332,6 +344,44 @@ export default class Gema extends Phaser.GameObjects.Image {
 		b2Body_SetAngularVelocity(this.bodyId, 0);
 	}
 
+	beginGeneratorCoreConsumption() {
+		if (this.destroyed || this.consuming || this.merging || this.mouseCarried || this.held) {
+			return false;
+		}
+
+		this.consuming = true;
+		this.disableInteractive();
+		this.setDepth(1200);
+		this.setCollisionsEnabled(false);
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+
+		const startX = this.x;
+		const startY = this.y;
+		const startScaleX = this.scaleX;
+		const startScaleY = this.scaleY;
+
+		this.scene.tweens.killTweensOf(this);
+		this.scene.tweens.add({
+			targets: this,
+			scaleX: { from: startScaleX, to: 0.05 },
+			scaleY: { from: startScaleY, to: 0.05 },
+			duration: 180,
+			ease: "Cubic.easeIn",
+			onUpdate: () => {
+				b2Body_SetTransform(this.bodyId, new b2Vec2(pxm(startX), -pxm(startY)), b2MakeRot(0));
+				b2Body_SetAwake(this.bodyId, true);
+			},
+			onComplete: () => {
+				(this.scene as any).spawnRewardCoins?.(startX, startY, this.getRewardValue(), 6);
+				this.destroyGem(true);
+			},
+		});
+
+		return true;
+	}
+
 	releaseFromRobotHold(x: number, y: number) {
 		if (this.destroyed) {
 			return;
@@ -358,6 +408,26 @@ export default class Gema extends Phaser.GameObjects.Image {
 		return this.x >= bounds.left && this.x <= bounds.right && this.y >= bounds.top && this.y <= bounds.bottom;
 	}
 
+	private isInsideGeneratorCore() {
+		const generatorCore = (this.scene as any).generatorCore as Phaser.GameObjects.Ellipse | undefined;
+		if (!generatorCore) {
+			return false;
+		}
+
+		const bounds = generatorCore.getBounds();
+		return this.x >= bounds.left && this.x <= bounds.right && this.y >= bounds.top && this.y <= bounds.bottom;
+	}
+
+	private isInsideLevelBase3() {
+		const levelBase3 = (this.scene as any).levelBase3 as Phaser.GameObjects.Image | undefined;
+		if (!levelBase3) {
+			return false;
+		}
+
+		const bounds = levelBase3.getBounds();
+		return this.x >= bounds.left && this.x <= bounds.right && this.y >= bounds.top && this.y <= bounds.bottom;
+	}
+
 	updateHold() {
 		if (this.destroyed || !this.heldRobotBodyId || !this.bodyId) {
 			return;
@@ -367,16 +437,17 @@ export default class Gema extends Phaser.GameObjects.Image {
 		b2Body_SetTransform(this.bodyId, new b2Vec2(robotPosition.x, robotPosition.y - pxm(120)), b2MakeRot(0));
 	}
 
-	destroyGem() {
+	destroyGem(spawnRewardCoins = this.held) {
 		if (this.destroyed) {
 			return;
 		}
 
-		if (this.held) {
+		if (spawnRewardCoins) {
 			(this.scene as any).spawnRewardCoins?.(this.x, this.y, this.getRewardValue());
 		}
 
 		this.destroyed = true;
+		this.consuming = false;
 		this.mergeTween?.remove();
 		this.mergeTween = undefined;
 		this.releaseRobotReservation();

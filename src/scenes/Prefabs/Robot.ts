@@ -93,8 +93,6 @@ export default class Robot extends SpineGameObject {
 	private liftDistance = pxm(900);
 	private readonly returnThreshold = 0.05;
 	private homePosition = new b2Vec2(0, 0);
-	private stackCount = 0;
-	private readonly stackVerticalSpacing = 78;
 	private idleWanderTarget: { x: number; y: number } | null = null;
 	private idleWanderPause = 0;
 	private readonly idleWanderRadius = pxm(180);
@@ -403,9 +401,11 @@ export default class Robot extends SpineGameObject {
 	}
 
 	private getStackTargetPosition(referenceX: number) {
-		const dropPlace = (this.scene as any).dropPlace as Phaser.GameObjects.Rectangle | undefined;
-		const targetX = dropPlace ? dropPlace.x : referenceX;
-		const targetY = dropPlace ? dropPlace.y - this.stackCount * this.stackVerticalSpacing : this.homePosition.y;
+		const scene = this.scene as any;
+		const useGeneratorCore = scene.isGeneratorReviewActive?.();
+		const targetZone = useGeneratorCore ? scene.generatorCore : scene.dropPlace;
+		const targetX = targetZone ? targetZone.x : referenceX;
+		const targetY = targetZone ? targetZone.y : this.homePosition.y;
 		return pxmVec2(targetX, -targetY);
 	}
 
@@ -421,7 +421,6 @@ export default class Robot extends SpineGameObject {
 		if (this.heldGem) {
 			const dropPosition = this.targetPosition;
 			this.heldGem.releaseFromRobotHold?.(dropPosition.x, dropPosition.y);
-			this.stackCount += 1;
 			this.heldGem = null;
 		}
 
