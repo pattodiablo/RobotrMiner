@@ -6,6 +6,7 @@
 import Coin from "./Prefabs/Coin";
 import Robot from "./Prefabs/Robot";
 import GemLevelBar from "./Prefabs/GemLevelBar";
+import Leveler from "./Prefabs/Leveler";
 /* START-USER-IMPORTS */
 import Gema from "./Prefabs/Gema";
 import Roca from "./Prefabs/Roca";
@@ -36,6 +37,7 @@ import {
 	b2Transform,
 	b2MakeRot,
 	b2MakeBox,
+
 	b2DebugDraw as PhaserDebugDraw,
 	b2World_GetContactEvents,
 	b2World_Draw,
@@ -44,6 +46,11 @@ import {
 	pxm,
 	pxmVec2,
 	} from "../box2d.js";
+
+type b2BodyId = {
+	index1: number;
+	revision: number;
+};
 
 /* END-USER-IMPORTS */
 
@@ -110,7 +117,6 @@ export default class Level extends Phaser.Scene {
 
 		// add body_1 to levelBase
 		AddSpriteToWorld(this.worldId, levelBase, { bodyId: body_1 });
-		this.levelBaseBodyId = body_1;
 
 		// shape_1
 		const shape_1 = b2CreatePolygonShape(body_1, { 
@@ -128,46 +134,11 @@ export default class Level extends Phaser.Scene {
 
 		// add body_2 to levelBase2
 		AddSpriteToWorld(this.worldId, levelBase2, { bodyId: body_2 });
-		this.levelBase2BodyId = body_2;
 
 		// shape_3
 		const shape_3 = b2CreatePolygonShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
-
-		// oruguita
-		const oruguita = this.add.image(32, 1024, "oruguita");
-
-		// body_3
-		const body_3 = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			position: pxmVec2(32, -1024)
-		});
-
-		// add body_3 to oruguita
-		AddSpriteToWorld(this.worldId, oruguita, { bodyId: body_3 });
-
-		// shape_4
-		const shape_4 = b2CreatePolygonShape(body_3, { 
-			...b2DefaultShapeDef()
-		}, b2MakeBox(pxm(185), pxm(50.5)));
-
-		// oruguita_1
-		const oruguita_1 = this.add.image(1008, 1024, "oruguita");
-
-		// body_4
-		const body_4 = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			position: pxmVec2(1008, -1024)
-		});
-
-		// add body_4 to oruguita_1
-		AddSpriteToWorld(this.worldId, oruguita_1, { bodyId: body_4 });
-
-		// shape_5
-		const shape_5 = b2CreatePolygonShape(body_4, { 
-			...b2DefaultShapeDef()
-		}, b2MakeBox(pxm(185), pxm(50.5)));
 
 		// processBtn
 		const processBtn = this.add.image(515, 494, "ProcessBtn");
@@ -186,13 +157,33 @@ export default class Level extends Phaser.Scene {
 		this.add.existing(levelBar);
 
 		// powerMachine
-		this.add.image(560, -336, "PowerMachine");
+		const powerMachine = this.add.image(496, -416, "PowerMachine");
+		powerMachine.scaleX = 0.7614161849074168;
+		powerMachine.scaleY = 0.7614161849074168;
 
+		// levelBase3
+		const levelBase3 = this.add.image(512, -208, "levelBase");
+
+		// leveler
+		const leveler = new Leveler(this, 864, 784);
+		this.add.existing(leveler);
+
+		// checkBtn
+		const checkBtn = this.add.image(112, 496, "CheckBtn");
+
+		// returnBtn2
+		const returnBtn2 = this.add.image(528, -208, "ReturnBtn");
+
+		this.body_1 = body_1;
 		this.levelBase = levelBase;
+		this.body_2 = body_2;
 		this.levelBase2 = levelBase2;
 		this.processBtn = processBtn;
 		this.returnBtn = returnBtn;
 		this.levelBar = levelBar;
+		this.levelBase3 = levelBase3;
+		this.checkBtn = checkBtn;
+		this.returnBtn2 = returnBtn2;
 
 		this.events.emit("scene-awake");
 	}
@@ -203,16 +194,22 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
+	private body_1!: b2BodyId;
 	private levelBase!: Phaser.GameObjects.Image;
+	private body_2!: b2BodyId;
 	private levelBase2!: Phaser.GameObjects.Image;
 	private processBtn!: Phaser.GameObjects.Image;
 	private returnBtn!: Phaser.GameObjects.Image;
 	private levelBar!: GemLevelBar;
+	private levelBase3!: Phaser.GameObjects.Image;
+	private checkBtn!: Phaser.GameObjects.Image;
+	private returnBtn2!: Phaser.GameObjects.Image;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
 
 	// Write your code here
+
 	private gems: Gema[] = [];
 	private carriedGem: Gema | null = null;
 	private rockSpawnCount = 0;
@@ -225,6 +222,11 @@ export default class Level extends Phaser.Scene {
 	private readonly rockSpawnMaxDelay = 7500;
 	private readonly rockSpawnRampSpawns = 18;
 	private readonly rockSpawnVariance = 0.32;
+	private readonly maxVisibleRocks = 20;
+	private readonly levelerSpawnX = 960;
+	private readonly levelerSpawnY = 1312;
+	private readonly levelerSpawnInterval = 10000;
+	private readonly maxLevelerInstances = 6;
 	private debugCanvas: HTMLCanvasElement | null = null;
 	private debugContext: CanvasRenderingContext2D | null = null;
 	private debugDraw: any = null;
@@ -233,6 +235,9 @@ export default class Level extends Phaser.Scene {
 	private debugToggleKey!: Phaser.Input.Keyboard.Key;
 	private levelOpened = false;
 	private levelOpenTween?: Phaser.Tweens.Tween;
+	private checkCameraTween?: Phaser.Tweens.Tween;
+	private levelerSpawnTimer?: Phaser.Time.TimerEvent;
+	private levelerInstanceCount = 1;
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
@@ -241,6 +246,7 @@ export default class Level extends Phaser.Scene {
 	private levelBase2BodyId!: any;
 	private readonly levelOpenShiftX = 240;
 	private readonly levelOpenCameraOffset = 650;
+	private readonly checkCameraOffset = 650;
 	private readonly levelOpenDuration = 1500;
 	private readonly levelHoldDuration = 2200;
 	private createLevelBounds() {
@@ -267,6 +273,7 @@ export default class Level extends Phaser.Scene {
 		}, b2MakeBox(pxm(800), pxm(100)));
 	}
 	create() {
+
 		SetWorldScale(40);
 
 		const worldDef = b2DefaultWorldDef();
@@ -281,6 +288,9 @@ export default class Level extends Phaser.Scene {
 		this.setupBloomEffect();
 		this.setupProcessButton();
 		this.setupReturnButton();
+		this.setupCheckButton();
+		this.setupReturnButton2();
+		this.scheduleLevelerSpawns();
 		this.setupBox2DDebug();
 		this.createMoneyHud();
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
@@ -289,7 +299,8 @@ export default class Level extends Phaser.Scene {
 		this.scheduleNextRockSpawn();
 		this.debugToggleKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3);
 
-
+		this.levelBaseBodyId = this.body_1;
+		this.levelBase2BodyId = this.body_2; 
 
 
 	}
@@ -303,6 +314,7 @@ export default class Level extends Phaser.Scene {
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
 		this.handleSecondLevelRocks();
 		this.handleGemMerges();
+		this.handleLevelerGemPickup();
 		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
 		UpdateWorldSprites(this.worldId);
@@ -364,12 +376,12 @@ export default class Level extends Phaser.Scene {
 	private setupBloomEffect() {
 		this.bloomEffect?.parallelFilters.destroy();
 		const bloomEffects = Phaser.Actions.AddEffectBloom(this.cameras.main, {
-			threshold: 0.3,
-			blurRadius: 0.10,
-			blurSteps: 2,
+			threshold: 0.2,
+			blurRadius: 0.1,
+			blurSteps: 1,
 			blurQuality: 2,
 			blendAmount: 0.85,
-			blendMode: Phaser.BlendModes.ADD,
+			blendMode: Phaser.BlendModes.SCREEN,
 		});
 		this.bloomEffect = bloomEffects[0];
 	}
@@ -385,9 +397,72 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private spawnRock(x: number, y: number) {
+		if (this.countVisibleRocks() >= this.maxVisibleRocks) {
+			return null;
+		}
+
 		const rock = new Roca(this, x, y);
 		this.add.existing(rock);
 		return rock;
+	}
+
+	private countVisibleRocks() {
+		const camera = this.cameras.main as any;
+		const view = camera.worldView ?? {
+			x: camera.scrollX,
+			y: camera.scrollY,
+			width: this.scale.width,
+			height: this.scale.height,
+		};
+		const left = view.x;
+		const top = view.y;
+		const right = view.x + view.width;
+		const bottom = view.y + view.height;
+
+		let visibleRockCount = 0;
+		for (const object of this.children.list) {
+			if (!(object instanceof Roca)) {
+				continue;
+			}
+
+			if ((object as any).isRockDestroyed?.()) {
+				continue;
+			}
+
+			const halfWidth = object.displayWidth / 2;
+			const halfHeight = object.displayHeight / 2;
+			const rockLeft = object.x - halfWidth;
+			const rockRight = object.x + halfWidth;
+			const rockTop = object.y - halfHeight;
+			const rockBottom = object.y + halfHeight;
+
+			if (rockRight < left || rockLeft > right || rockBottom < top || rockTop > bottom) {
+				continue;
+			}
+
+			visibleRockCount += 1;
+		}
+
+		return visibleRockCount;
+	}
+
+	private scheduleLevelerSpawns() {
+		this.levelerSpawnTimer?.remove(false);
+		this.levelerSpawnTimer = this.time.addEvent({
+			delay: this.levelerSpawnInterval,
+			loop: true,
+			callback: () => {
+				if (this.levelerInstanceCount >= this.maxLevelerInstances) {
+					this.levelerSpawnTimer?.remove(false);
+					this.levelerSpawnTimer = undefined;
+					return;
+				}
+
+				const leveler = new Leveler(this, this.levelerSpawnX, this.levelerSpawnY);
+				this.add.existing(leveler);
+				this.levelerInstanceCount += 1;
+			},
+		});
 	}
 
 	public registerGem(gem: Gema) {
@@ -506,6 +581,20 @@ export default class Level extends Phaser.Scene {
 		this.returnBtn.on("pointerdown", this.returnToInitialScene, this);
 	}
 
+	private setupCheckButton() {
+		this.checkBtn.setScrollFactor(1);
+		this.checkBtn.setInteractive({ useHandCursor: true });
+		this.checkBtn.setDepth(1500);
+		this.checkBtn.on("pointerdown", this.moveCameraUp, this);
+	}
+
+	private setupReturnButton2() {
+		this.returnBtn2.setScrollFactor(1);
+		this.returnBtn2.setInteractive({ useHandCursor: true });
+		this.returnBtn2.setDepth(1500);
+		this.returnBtn2.on("pointerdown", this.moveCameraDown, this);
+	}
+
 	private getLevelBaseBodyId() {
 		return this.levelBaseBodyId ?? (this.levelBase as any).bodyId;
 	}
@@ -565,6 +654,50 @@ export default class Level extends Phaser.Scene {
 		});
 
 		return;
+	}
+
+	private moveCameraUp() {
+		this.checkCameraTween?.stop();
+
+		const startScrollY = this.cameras.main.scrollY;
+		const targetScrollY = startScrollY - this.checkCameraOffset;
+
+		this.checkCameraTween = this.tweens.addCounter({
+			from: 0,
+			to: 1,
+			duration: 900,
+			ease: "Cubic.easeInOut",
+			onUpdate: (tween) => {
+				const progress = Number(tween.getValue() ?? 0);
+				this.cameras.main.scrollY = Phaser.Math.Linear(startScrollY, targetScrollY, progress);
+			},
+			onComplete: () => {
+				this.cameras.main.scrollY = targetScrollY;
+				this.checkCameraTween = undefined;
+			},
+		});
+	}
+
+	private moveCameraDown() {
+		this.checkCameraTween?.stop();
+
+		const startScrollY = this.cameras.main.scrollY;
+		const targetScrollY = startScrollY + this.checkCameraOffset;
+
+		this.checkCameraTween = this.tweens.addCounter({
+			from: 0,
+			to: 1,
+			duration: 900,
+			ease: "Cubic.easeInOut",
+			onUpdate: (tween) => {
+				const progress = Number(tween.getValue() ?? 0);
+				this.cameras.main.scrollY = Phaser.Math.Linear(startScrollY, targetScrollY, progress);
+			},
+			onComplete: () => {
+				this.cameras.main.scrollY = targetScrollY;
+				this.checkCameraTween = undefined;
+			},
+		});
 	}
 
 	private openLevelAccess() {
@@ -726,6 +859,44 @@ export default class Level extends Phaser.Scene {
 		return;
 	}
 
+	private handleLevelerGemPickup() {
+		const contactEvents = b2World_GetContactEvents(this.worldId);
+		if (!contactEvents.beginEvents || contactEvents.beginCount === 0) {
+			return;
+		}
+
+		for (let index = 0; index < contactEvents.beginCount; index += 1) {
+			const contact = contactEvents.beginEvents[index];
+			const leveler = this.findLevelerByShapeId(contact.shapeIdA) ?? this.findLevelerByShapeId(contact.shapeIdB);
+			const gem = this.findGemByShapeId(contact.shapeIdA) ?? this.findGemByShapeId(contact.shapeIdB);
+
+			if (!leveler || !gem) {
+				continue;
+			}
+
+			if (!leveler.canCarryGem?.() || !gem.canBeTransportedByLeveler?.()) {
+				continue;
+			}
+
+			leveler.tryCarryGem?.(gem);
+		}
+	}
+
+	private findLevelerByShapeId(shapeId: any) {
+		for (const object of this.children.list) {
+			if (!(object instanceof Leveler)) {
+				continue;
+			}
+
+			const levelerShapeId = object.getShapeId?.();
+			if (levelerShapeId && this.sameShapeId(levelerShapeId, shapeId)) {
+				return object;
+			}
+		}
+
+		return null;
+	}
+
 	private findGemByShapeId(shapeId: any) {
 		for (const gem of this.gems) {
 			const gemShapeId = gem.getShapeId();
@@ -806,6 +977,11 @@ export default class Level extends Phaser.Scene {
 	private scheduleNextRockSpawn() {
 		const delay = this.computeNextRockSpawnDelay();
 		this.time.delayedCall(delay, () => {
+			if (this.countVisibleRocks() >= this.maxVisibleRocks) {
+				this.scheduleNextRockSpawn();
+				return;
+			}
+
 			this.rockSpawnCount += 1;
 			const margin = 80;
 			const width = this.scale.width;

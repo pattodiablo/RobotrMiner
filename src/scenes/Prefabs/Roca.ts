@@ -340,7 +340,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 	}
 
 	private randomHitCount() {
-		return 1 + Math.floor(Math.random() * 2);
+		return 1;
 	}
 
 	private randomSizeMultiplier() {

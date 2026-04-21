@@ -7,6 +7,11 @@
                 "key": "background"
             },
             {
+                "url": "assets/images/CheckBtn.png",
+                "type": "image",
+                "key": "CheckBtn"
+            },
+            {
                 "url": "assets/images/coin.png",
                 "type": "image",
                 "key": "coin"
