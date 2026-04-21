@@ -216,7 +216,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.breakRock();
 	}
 
-	private breakRock() {
+	private breakRock(forceGemReward = false) {
 		if (this.destroyed) {
 			return;
 		}
@@ -225,9 +225,9 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.removeFromWorld();
 		this.spawnDebreeBurst();
 
-		if (this.sizeMultiplier > this.minSplitMultiplier && Math.random() < this.splitChance) {
+		if (!forceGemReward && this.sizeMultiplier > this.minSplitMultiplier && Math.random() < this.splitChance) {
 			this.spawnChildRocks();
-		} else if (this.sizeMultiplier > this.childSizeMultiplier || Math.random() < this.smallRockGemChance) {
+		} else if (forceGemReward || this.sizeMultiplier > this.childSizeMultiplier || Math.random() < this.smallRockGemChance) {
 			this.spawnGemReward();
 		}
 
@@ -246,6 +246,15 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.collisionBreakArmed = false;
 
 		this.breakRock();
+	}
+
+	breakOnSecondLevel() {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.collisionBreakArmed = false;
+		this.breakRock(true);
 	}
 
 	private spawnChildRocks() {

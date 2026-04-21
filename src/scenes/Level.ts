@@ -3,8 +3,9 @@
 
 /* START OF COMPILED CODE */
 
-import Robot from "./Prefabs/Robot";
 import Coin from "./Prefabs/Coin";
+import Robot from "./Prefabs/Robot";
+import GemLevelBar from "./Prefabs/GemLevelBar";
 /* START-USER-IMPORTS */
 import Gema from "./Prefabs/Gema";
 import Roca from "./Prefabs/Roca";
@@ -17,6 +18,8 @@ import {
 	CreateDebugDraw,
 	DYNAMIC,
 	b2BodyType,
+	b2Body_SetTransform,
+	b2Body_SetType,
 	SetWorldScale,
 	UpdateWorldSprites,
 	WorldStep,
@@ -28,6 +31,7 @@ import {
 	b2CreatePolygonShape,
 	b2DefaultShapeDef,
 	b2ComputeHull,
+	b2Body_GetShapes,
 	b2MakeOffsetPolygon,
 	b2Transform,
 	b2MakeRot,
@@ -62,33 +66,15 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 
 		// background
-		const background = this.add.image(-40, -59, "background");
-		background.scaleX = 0.5427640102953456;
-		background.scaleY = 0.5427640102953456;
+		const background = this.add.image(-400, -64, "background");
+		background.scaleX = 0.9512865035643506;
+		background.scaleY = 0.9239612142903928;
 		background.setOrigin(0, 0);
-
-		// piso
-		const piso = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			position: pxmVec2(494, -629)
-		});
-
-		// shape_1
-		const shape_1 = b2CreatePolygonShape(piso, { 
-			...b2DefaultShapeDef(), 
-			restitution: 0.5
-		}, b2MakeBox(pxm(800), pxm(100)));
-
-		// mainCharacter
-		const mainCharacter = new Robot(this, this.spine, 743, 255);
-		this.add.existing(mainCharacter);
-		mainCharacter.scaleX = 0.6501425353183732;
-		mainCharacter.scaleY = 0.6501425353183732;
 
 		// pared1
 		const pared1 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(-100, -246)
+			position: pxmVec2(-100, -604)
 		});
 
 		// shape
@@ -100,7 +86,7 @@ export default class Level extends Phaser.Scene {
 		// pared
 		const pared = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(1139, -246)
+			position: pxmVec2(1139, -604)
 		});
 
 		// shape_2
@@ -109,25 +95,101 @@ export default class Level extends Phaser.Scene {
 			restitution: 0.5
 		}, b2MakeBox(pxm(100), pxm(600)));
 
-		// mainCharacter_1
-		const mainCharacter_1 = new Robot(this, this.spine, 396, 208);
-		this.add.existing(mainCharacter_1);
-		mainCharacter_1.scaleX = 0.6501425353183732;
-		mainCharacter_1.scaleY = 0.6501425353183732;
-
-		// mainCharacter_2
-		const mainCharacter_2 = new Robot(this, this.spine, 206, 199);
-		this.add.existing(mainCharacter_2);
-		mainCharacter_2.scaleX = 0.6501425353183732;
-		mainCharacter_2.scaleY = 0.6501425353183732;
-
 		// coin
 		const coin = new Coin(this, -252, 129);
 		this.add.existing(coin);
 
-		this.mainCharacter = mainCharacter;
-		this.mainCharacter_1 = mainCharacter_1;
-		this.mainCharacter_2 = mainCharacter_2;
+		// levelBase
+		const levelBase = this.add.image(515, 499, "levelBase");
+
+		// body_1
+		const body_1 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(515, -499)
+		});
+
+		// add body_1 to levelBase
+		AddSpriteToWorld(this.worldId, levelBase, { bodyId: body_1 });
+		this.levelBaseBodyId = body_1;
+
+		// shape_1
+		const shape_1 = b2CreatePolygonShape(body_1, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(570.5), pxm(60)));
+
+		// levelBase2
+		const levelBase2 = this.add.image(515, 1132, "levelBase");
+
+		// body_2
+		const body_2 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(515, -1132)
+		});
+
+		// add body_2 to levelBase2
+		AddSpriteToWorld(this.worldId, levelBase2, { bodyId: body_2 });
+		this.levelBase2BodyId = body_2;
+
+		// shape_3
+		const shape_3 = b2CreatePolygonShape(body_2, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(570.5), pxm(60)));
+
+		// oruguita
+		const oruguita = this.add.image(32, 1024, "oruguita");
+
+		// body_3
+		const body_3 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(32, -1024)
+		});
+
+		// add body_3 to oruguita
+		AddSpriteToWorld(this.worldId, oruguita, { bodyId: body_3 });
+
+		// shape_4
+		const shape_4 = b2CreatePolygonShape(body_3, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(185), pxm(50.5)));
+
+		// oruguita_1
+		const oruguita_1 = this.add.image(1008, 1024, "oruguita");
+
+		// body_4
+		const body_4 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(1008, -1024)
+		});
+
+		// add body_4 to oruguita_1
+		AddSpriteToWorld(this.worldId, oruguita_1, { bodyId: body_4 });
+
+		// shape_5
+		const shape_5 = b2CreatePolygonShape(body_4, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(185), pxm(50.5)));
+
+		// processBtn
+		const processBtn = this.add.image(515, 494, "ProcessBtn");
+
+		// returnBtn
+		const returnBtn = this.add.image(528, 1136, "ReturnBtn");
+
+		// robot
+		const robot = new Robot(this, this.spine, 160, 192);
+		this.add.existing(robot);
+		robot.scaleX = 0.6136006445175658;
+		robot.scaleY = 0.6136006445175658;
+
+		// levelBar
+		const levelBar = new GemLevelBar(this, 16, 16);
+		this.add.existing(levelBar);
+
+		this.levelBase = levelBase;
+		this.levelBase2 = levelBase2;
+		this.processBtn = processBtn;
+		this.returnBtn = returnBtn;
+		this.levelBar = levelBar;
 
 		this.events.emit("scene-awake");
 	}
@@ -138,9 +200,11 @@ export default class Level extends Phaser.Scene {
 		UpdateWorldSprites(this.worldId);
 	}
 
-	private mainCharacter!: Robot;
-	private mainCharacter_1!: Robot;
-	private mainCharacter_2!: Robot;
+	private levelBase!: Phaser.GameObjects.Image;
+	private levelBase2!: Phaser.GameObjects.Image;
+	private processBtn!: Phaser.GameObjects.Image;
+	private returnBtn!: Phaser.GameObjects.Image;
+	private levelBar!: GemLevelBar;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -163,6 +227,17 @@ export default class Level extends Phaser.Scene {
 	private debugDraw: any = null;
 	private debugEnabled = false;
 	private debugToggleKey!: Phaser.Input.Keyboard.Key;
+	private levelOpened = false;
+	private levelOpenTween?: Phaser.Tweens.Tween;
+	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
+	private initialCameraScrollY = 0;
+	private secondLevelGemMinY = 0;
+	private levelBaseBodyId!: any;
+	private levelBase2BodyId!: any;
+	private readonly levelOpenShiftX = 240;
+	private readonly levelOpenCameraOffset = 650;
+	private readonly levelOpenDuration = 1500;
+	private readonly levelHoldDuration = 2200;
 	private createLevelBounds() {
 		const b2body = b2CreateBody(this.worldId, {
 			...b2DefaultBodyDef(),
@@ -196,6 +271,10 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 		this.editorCreate();
 		this.createLevelBounds();
+		this.initialCameraScrollY = this.cameras.main.scrollY;
+		this.secondLevelGemMinY = this.levelBase2.y - 240;
+		this.setupProcessButton();
+		this.setupReturnButton();
 		this.setupBox2DDebug();
 		this.createMoneyHud();
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
@@ -283,6 +362,7 @@ export default class Level extends Phaser.Scene {
 
 	public registerGem(gem: Gema) {
 		if (!this.gems.includes(gem)) {
+			gem.setSecondLevelMinY(this.secondLevelGemMinY);
 			this.gems.push(gem);
 		}
 	}
@@ -374,6 +454,161 @@ export default class Level extends Phaser.Scene {
 		});
 	}
 
+	private setupProcessButton() {
+		this.processBtn.setScrollFactor(1);
+		this.processBtn.setInteractive({ useHandCursor: true });
+		this.processBtn.setDepth(1500);
+		this.processBtn.on("pointerdown", this.openLevelAccess, this);
+	}
+
+	private setupReturnButton() {
+		this.returnBtn.setScrollFactor(1);
+		this.returnBtn.setInteractive({ useHandCursor: true });
+		this.returnBtn.setDepth(1500);
+		this.returnBtn.disableInteractive();
+		this.returnBtn.on("pointerdown", this.returnToInitialScene, this);
+	}
+
+	private getLevelBaseBodyId() {
+		return this.levelBaseBodyId ?? (this.levelBase as any).bodyId;
+	}
+
+	private getLevelBase2BodyId() {
+		return this.levelBase2BodyId ?? (this.levelBase2 as any).bodyId;
+	}
+
+	private getLevelBase2ShapeId() {
+		const bodyId = this.getLevelBase2BodyId();
+		if (!bodyId) {
+			return null;
+		}
+
+		const shapeIds: any[] = [];
+		const shapeCount = b2Body_GetShapes(bodyId, shapeIds);
+		return shapeCount > 0 ? shapeIds[0] : null;
+	}
+
+	private animateLevelBase(targetX: number, targetScrollY: number, onComplete: () => void) {
+		this.levelOpenTween?.stop();
+
+		const levelBaseBodyId = this.getLevelBaseBodyId();
+		const levelBase2BodyId = this.getLevelBase2BodyId();
+		if (!levelBaseBodyId || !levelBase2BodyId) {
+			this.processBtn.setInteractive({ useHandCursor: true });
+			return;
+		}
+
+		const startX = this.levelBase.x;
+		const startScrollY = this.cameras.main.scrollY;
+
+		b2Body_SetType(levelBaseBodyId, b2BodyType.b2_kinematicBody);
+		b2Body_SetType(levelBase2BodyId, b2BodyType.b2_staticBody);
+
+		this.levelOpenTween = this.tweens.addCounter({
+			from: 0,
+			to: 1,
+			duration: this.levelOpenDuration,
+			ease: "Cubic.easeInOut",
+			onUpdate: (tween) => {
+				const progress = Number(tween.getValue() ?? 0);
+				const nextX = Phaser.Math.Linear(startX, targetX, progress);
+				const nextScrollY = Phaser.Math.Linear(startScrollY, targetScrollY, progress);
+
+				this.levelBase.x = nextX;
+				b2Body_SetTransform(levelBaseBodyId, pxmVec2(nextX, -this.levelBase.y), b2MakeRot(0));
+				this.cameras.main.scrollY = nextScrollY;
+			},
+			onComplete: () => {
+				this.levelBase.x = targetX;
+				b2Body_SetTransform(levelBaseBodyId, pxmVec2(targetX, -this.levelBase.y), b2MakeRot(0));
+				this.cameras.main.scrollY = targetScrollY;
+				this.levelOpenTween = undefined;
+				onComplete();
+			},
+		});
+
+		return;
+	}
+
+	private openLevelAccess() {
+
+		if (this.levelOpened) {
+			return;
+		}
+
+		this.levelOpened = true;
+		this.processBtn.disableInteractive();
+		this.returnBtn.disableInteractive();
+		this.levelAutoCloseTimer?.remove(false);
+		const targetX = this.levelBase.x - (this.scale.width + this.levelOpenShiftX);
+		const targetScrollY = this.initialCameraScrollY + this.levelOpenCameraOffset;
+
+		this.animateLevelBase(targetX, targetScrollY, () => {
+			this.processBtn.disableInteractive();
+			this.returnBtn.setInteractive({ useHandCursor: true });
+			this.levelAutoCloseTimer?.remove(false);
+			this.levelAutoCloseTimer = this.time.delayedCall(this.levelHoldDuration, () => {
+				this.closeLevelAccess(false);
+			});
+		});
+
+		if (!this.levelOpenTween) {
+			this.levelOpened = false;
+		}
+	}
+
+	private returnToInitialScene() {
+		this.levelAutoCloseTimer?.remove(false);
+		this.levelAutoCloseTimer = undefined;
+		this.levelOpened = false;
+		this.returnBtn.disableInteractive();
+		this.processBtn.disableInteractive();
+		const targetX = 515;
+		const targetScrollY = this.initialCameraScrollY;
+
+		this.animateLevelBase(targetX, targetScrollY, () => {
+			this.processBtn.setInteractive({ useHandCursor: true });
+			this.returnBtn.disableInteractive();
+		});
+
+		if (!this.levelOpenTween) {
+			this.processBtn.setInteractive({ useHandCursor: true });
+			this.returnBtn.disableInteractive();
+		}
+	}
+
+	private closeLevelAccess(restoreCamera: boolean) {
+		if (!this.levelOpened) {
+			return;
+		}
+
+		this.levelOpened = false;
+		this.levelAutoCloseTimer?.remove(false);
+		this.levelAutoCloseTimer = undefined;
+		this.returnBtn.disableInteractive();
+		const targetX = 515;
+		const targetScrollY = restoreCamera ? this.initialCameraScrollY : this.cameras.main.scrollY;
+
+		this.processBtn.disableInteractive();
+		this.animateLevelBase(targetX, targetScrollY, () => {
+			this.processBtn.setInteractive({ useHandCursor: true });
+			if (restoreCamera) {
+				this.returnBtn.disableInteractive();
+			} else {
+				this.returnBtn.setInteractive({ useHandCursor: true });
+			}
+		});
+
+		if (!this.levelOpenTween) {
+			this.processBtn.setInteractive({ useHandCursor: true });
+			if (restoreCamera) {
+				this.returnBtn.disableInteractive();
+			} else {
+				this.returnBtn.setInteractive({ useHandCursor: true });
+			}
+		}
+	}
+
 	private formatMoneyValue(value: number) {
 		const rawValue = Math.max(0, Math.floor(value)).toString().padStart(9, "0");
 		return rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -452,12 +687,37 @@ export default class Level extends Phaser.Scene {
 			return;
 		}
 
+		const levelBase2ShapeId = this.getLevelBase2ShapeId();
+		const secondLevelRocks = new Set<Roca>();
 		const contactedRocks = new Set<Roca>();
 
 		for (let index = 0; index < contactEvents.beginCount; index += 1) {
 			const contact = contactEvents.beginEvents[index];
+			if (levelBase2ShapeId) {
+				if (this.sameShapeId(contact.shapeIdA, levelBase2ShapeId)) {
+					const rock = this.findRockByShapeId(contact.shapeIdB);
+					if (rock) {
+						secondLevelRocks.add(rock);
+					}
+				}
+
+				if (this.sameShapeId(contact.shapeIdB, levelBase2ShapeId)) {
+					const rock = this.findRockByShapeId(contact.shapeIdA);
+					if (rock) {
+						secondLevelRocks.add(rock);
+					}
+				}
+			}
+
 			const rockA = this.findRockByShapeId(contact.shapeIdA);
 			const rockB = this.findRockByShapeId(contact.shapeIdB);
+			if (rockA && secondLevelRocks.has(rockA)) {
+				continue;
+			}
+
+			if (rockB && secondLevelRocks.has(rockB)) {
+				continue;
+			}
 
 			if (!rockA || !rockB || rockA === rockB) {
 				continue;
@@ -475,17 +735,24 @@ export default class Level extends Phaser.Scene {
 			contactedRocks.add(rockB);
 		}
 
+		for (const rock of secondLevelRocks) {
+			rock.breakOnSecondLevel?.();
+		}
+
 		for (let index = 0; index < contactEvents.beginCount; index += 1) {
 			const contact = contactEvents.beginEvents[index];
 			const rockA = this.findRockByShapeId(contact.shapeIdA);
 			const rockB = this.findRockByShapeId(contact.shapeIdB);
 
 			if (rockA && rockB) {
+				if (secondLevelRocks.has(rockA) || secondLevelRocks.has(rockB)) {
+					continue;
+				}
 				continue;
 			}
 
 			const rock = rockA || rockB;
-			if (!rock || contactedRocks.has(rock)) {
+			if (!rock || contactedRocks.has(rock) || secondLevelRocks.has(rock)) {
 				continue;
 			}
 

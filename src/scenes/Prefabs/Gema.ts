@@ -114,6 +114,15 @@ export default class Gema extends Phaser.GameObjects.Image {
 	private mergeTween?: Phaser.Tweens.Tween;
 	private mouseCarried = false;
 	private collisionsDisabled = false;
+	private secondLevelMinY = Number.POSITIVE_INFINITY;
+
+	setSecondLevelMinY(minY: number) {
+		this.secondLevelMinY = minY;
+	}
+
+	isInSecondLevel() {
+		return this.y >= this.secondLevelMinY;
+	}
 
 	getBirthType() {
 		return this.birthType;
@@ -153,6 +162,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 	canBeTargetedByRobot(robotBodyId: any) {
 		if (this.destroyed || this.merging || this.mouseCarried || this.held) {
+			return false;
+		}
+
+		if (!this.isInSecondLevel()) {
 			return false;
 		}
 
@@ -270,6 +283,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 	beginMouseCarry() {
 		if (this.destroyed) {
 			return;
+		}
+
+		if (this.heldRobotBodyId) {
+			(this.scene as any).events.emit("robot-gem-stolen", this.heldRobotBodyId, this);
 		}
 
 		this.releaseRobotReservation();

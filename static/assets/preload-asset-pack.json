@@ -102,6 +102,21 @@
                 "key": "gema4"
             },
             {
+                "url": "assets/images/LevelBar.png",
+                "type": "image",
+                "key": "LevelBar"
+            },
+            {
+                "url": "assets/images/levelBase.png",
+                "type": "image",
+                "key": "levelBase"
+            },
+            {
+                "url": "assets/images/LevelOff.png",
+                "type": "image",
+                "key": "LevelOff"
+            },
+            {
                 "url": "assets/SpinePlayer/mainCharacter.json",
                 "type": "spineJson",
                 "key": "mainCharacter",
@@ -113,14 +128,94 @@
                 "key": "mainCharacter-atlas"
             },
             {
+                "url": "assets/images/oruguita.png",
+                "type": "image",
+                "key": "oruguita"
+            },
+            {
                 "url": "assets/images/PlayerBot.png",
                 "type": "image",
                 "key": "PlayerBot"
             },
             {
+                "url": "assets/images/ProcessBtn.png",
+                "type": "image",
+                "key": "ProcessBtn"
+            },
+            {
+                "url": "assets/images/ReturnBtn.png",
+                "type": "image",
+                "key": "ReturnBtn"
+            },
+            {
                 "url": "assets/images/roca1.png",
                 "type": "image",
                 "key": "roca1"
+            },
+            {
+                "url": "assets/images/smallGem1.png",
+                "type": "image",
+                "key": "smallGem1"
+            },
+            {
+                "url": "assets/images/smallGem10.png",
+                "type": "image",
+                "key": "smallGem10"
+            },
+            {
+                "url": "assets/images/smallGem11.png",
+                "type": "image",
+                "key": "smallGem11"
+            },
+            {
+                "url": "assets/images/smallGem12.png",
+                "type": "image",
+                "key": "smallGem12"
+            },
+            {
+                "url": "assets/images/smallGem13.png",
+                "type": "image",
+                "key": "smallGem13"
+            },
+            {
+                "url": "assets/images/smallGem2.png",
+                "type": "image",
+                "key": "smallGem2"
+            },
+            {
+                "url": "assets/images/smallGem3.png",
+                "type": "image",
+                "key": "smallGem3"
+            },
+            {
+                "url": "assets/images/smallGem4.png",
+                "type": "image",
+                "key": "smallGem4"
+            },
+            {
+                "url": "assets/images/smallGem5.png",
+                "type": "image",
+                "key": "smallGem5"
+            },
+            {
+                "url": "assets/images/smallGem6.png",
+                "type": "image",
+                "key": "smallGem6"
+            },
+            {
+                "url": "assets/images/smallGem7.png",
+                "type": "image",
+                "key": "smallGem7"
+            },
+            {
+                "url": "assets/images/smallGem8.png",
+                "type": "image",
+                "key": "smallGem8"
+            },
+            {
+                "url": "assets/images/smallGem9.png",
+                "type": "image",
+                "key": "smallGem9"
             }
         ]
     },

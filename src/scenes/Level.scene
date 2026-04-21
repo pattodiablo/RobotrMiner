@@ -2,6 +2,7 @@
     "id": "b685c081-ee5f-4b67-b583-415922c9e2c4",
     "sceneType": "SCENE",
     "settings": {
+        "snapEnabled": true,
         "exportClass": true,
         "autoImport": true,
         "preloadPackFiles": [],
@@ -21,52 +22,19 @@
             "texture": {
                 "key": "background"
             },
-            "x": -40,
-            "y": -59,
-            "scaleX": 0.5427640102953456,
-            "scaleY": 0.5427640102953456,
+            "x": -400,
+            "y": -64,
+            "scaleX": 0.9512865035643506,
+            "scaleY": 0.9239612142903928,
             "originX": 0,
             "originY": 0
-        },
-        {
-            "type": "b2Body",
-            "id": "9d118111-e47c-4144-9914-76cbccb9ccff",
-            "label": "piso",
-            "positionX": 494,
-            "positionY": -629,
-            "list": [
-                {
-                    "type": "b2BoxShape",
-                    "id": "9c9e76fc-ec84-4757-ba52-0aa9d381e227",
-                    "label": "shape_1",
-                    "restitution": 0.5,
-                    "halfWidth": 800,
-                    "halfHeight": 100
-                }
-            ]
-        },
-        {
-            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
-            "id": "61f253d0-680f-4605-b590-9f6a3aac567d",
-            "unlock": [
-                "x",
-                "y",
-                "scaleX",
-                "scaleY"
-            ],
-            "label": "mainCharacter",
-            "scope": "CLASS",
-            "x": 743,
-            "y": 255,
-            "scaleX": 0.6501425353183732,
-            "scaleY": 0.6501425353183732
         },
         {
             "type": "b2Body",
             "id": "d0acca49-6823-4e3c-8f42-8cc177e5840d",
             "label": "pared1",
             "positionX": -100,
-            "positionY": -246,
+            "positionY": -604,
             "list": [
                 {
                     "type": "b2BoxShape",
@@ -83,7 +51,7 @@
             "id": "7bfa4976-d1ac-4745-a6ac-3d1e03fa66d8",
             "label": "pared",
             "positionX": 1139,
-            "positionY": -246,
+            "positionY": -604,
             "list": [
                 {
                     "type": "b2BoxShape",
@@ -96,38 +64,6 @@
             ]
         },
         {
-            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
-            "id": "10ace3ba-b4f5-4186-b368-c3eb885c82cc",
-            "unlock": [
-                "x",
-                "y",
-                "scaleX",
-                "scaleY"
-            ],
-            "label": "mainCharacter_1",
-            "scope": "CLASS",
-            "x": 396,
-            "y": 208,
-            "scaleX": 0.6501425353183732,
-            "scaleY": 0.6501425353183732
-        },
-        {
-            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
-            "id": "590e24f8-79fe-4e19-8a54-f77ae7c58cbb",
-            "unlock": [
-                "x",
-                "y",
-                "scaleX",
-                "scaleY"
-            ],
-            "label": "mainCharacter_2",
-            "scope": "CLASS",
-            "x": 206,
-            "y": 199,
-            "scaleX": 0.6501425353183732,
-            "scaleY": 0.6501425353183732
-        },
-        {
             "prefabId": "899e1f4a-41d0-419f-8d07-40851e206d09",
             "id": "22599059-c2bc-4de5-b1b4-aa4ffd47e069",
             "unlock": [
@@ -137,6 +73,169 @@
             "label": "coin",
             "x": -252,
             "y": 129
+        },
+        {
+            "type": "Image",
+            "id": "802aa4dd-cbfc-4592-90ed-7a998b277daf",
+            "label": "levelBase",
+            "scope": "CLASS",
+            "texture": {
+                "key": "levelBase"
+            },
+            "x": 515,
+            "y": 499,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "b2785033-0907-4160-ba1e-9455d41e311a",
+                    "label": "body_1",
+                    "positionX": 515,
+                    "positionY": -499,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "9de2609f-d77f-4b1d-8468-a5d1b3e54b12",
+                            "label": "shape_1",
+                            "halfWidth": 570.5,
+                            "halfHeight": 60
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Image",
+            "id": "4182b467-ee5f-4928-84e2-027730528b8e",
+            "label": "levelBase2",
+            "scope": "CLASS",
+            "texture": {
+                "key": "levelBase"
+            },
+            "x": 515,
+            "y": 1132,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "a8cbf793-fd74-4711-be2d-8e4fac363197",
+                    "label": "body_2",
+                    "positionX": 515,
+                    "positionY": -1132,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "e98b905a-b63f-4fbf-8bdd-3c5f12c9f9a7",
+                            "label": "shape_3",
+                            "halfWidth": 570.5,
+                            "halfHeight": 60
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Image",
+            "id": "2b3ec77b-8b85-4fed-aa4f-81d3caa06f2c",
+            "label": "oruguita",
+            "texture": {
+                "key": "oruguita"
+            },
+            "x": 32,
+            "y": 1024,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "15057a6c-91e5-49a4-81af-ec972aa6e8ef",
+                    "label": "body_3",
+                    "positionX": 32,
+                    "positionY": -1024,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "82e2e2ea-3616-4d19-aa26-e191b98dbfe3",
+                            "label": "shape_4",
+                            "halfWidth": 185,
+                            "halfHeight": 50.5
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Image",
+            "id": "f983c346-21a0-44f6-892e-5275b348ba05",
+            "label": "oruguita_1",
+            "texture": {
+                "key": "oruguita"
+            },
+            "x": 1008,
+            "y": 1024,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "e9c88c24-2855-4ce6-96db-20a7046aa0ff",
+                    "label": "body_4",
+                    "positionX": 1008,
+                    "positionY": -1024,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "a2412413-f983-4308-9b9e-afcd4c670162",
+                            "label": "shape_5",
+                            "halfWidth": 185,
+                            "halfHeight": 50.5
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Image",
+            "id": "a58808e9-e1f2-4f0c-9978-5268d279f2aa",
+            "label": "processBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "ProcessBtn"
+            },
+            "x": 515,
+            "y": 494
+        },
+        {
+            "type": "Image",
+            "id": "88c35b7e-2457-4fab-b40c-c64e82d84d2a",
+            "label": "returnBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "ReturnBtn"
+            },
+            "x": 528,
+            "y": 1136
+        },
+        {
+            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
+            "id": "66f9896d-4f9e-4aee-be51-bdd617e5a0aa",
+            "unlock": [
+                "x",
+                "y",
+                "scaleX",
+                "scaleY"
+            ],
+            "label": "robot",
+            "x": 160,
+            "y": 192,
+            "scaleX": 0.6136006445175658,
+            "scaleY": 0.6136006445175658
+        },
+        {
+            "prefabId": "a5612b5d-ede6-432e-807b-9c81b24ddf28",
+            "id": "4d7eaf7f-ff70-4504-bba7-fd03edab322f",
+            "unlock": [
+                "x",
+                "y"
+            ],
+            "label": "levelBar",
+            "scope": "CLASS",
+            "x": 16,
+            "y": 16
         }
     ],
     "plainObjects": [],

@@ -33,6 +33,7 @@ import {
 	b2Body_SetTransform,
 	b2Body_GetPosition,
 	b2Body_SetLinearVelocity,
+	b2Body_SetAngularVelocity,
 	b2Body_SetType,
 
 	b2Vec2,
@@ -49,7 +50,9 @@ export default class Robot extends SpineGameObject {
 
 		this.skeleton.setSkinByName(skin ?? "default");
 		this.blinkSlot = this.skeleton.findSlot("blink");
+		this.sadSlot = this.skeleton.findSlot("sad");
 		this.setBlinkVisible(false);
+		this.setSadVisible(false);
 		this.blinkCooldown = this.randomBlinkDelay();
 
 		// body_1
@@ -66,6 +69,7 @@ export default class Robot extends SpineGameObject {
 		this.targetPosition = pxmVec2(this.x, -this.y);
 		this.animationState.setAnimation(0, "idle", true);
 		this.scene.events.on("update", this.handleSceneUpdate, this);
+		this.scene.events.on("robot-gem-stolen", this.handleGemStolen, this);
 
 		/* START-USER-CTR-CODE */
 		// Write your code here.
@@ -98,6 +102,8 @@ export default class Robot extends SpineGameObject {
 	private readonly idlePauseMinMs = 450;
 	private readonly idlePauseMaxMs = 1400;
 	private readonly idleViewportMargin = pxm(80);
+	private readonly sadMinMs = 1400;
+	private readonly sadMaxMs = 2400;
 	private isGrabbing = false;
 	private isHolding = false;
 	private heldGem: any = null;
@@ -106,9 +112,65 @@ export default class Robot extends SpineGameObject {
 	private isReturning = false;
 	private idleWanderStartDelay = 0;
 	private lastKnownPosition = new b2Vec2(0, 0);
+	private isSad = false;
+	private sadTimeLeft = 0;
+	private sadSlot: any;
 
 	private handleSceneUpdate(_time: number, delta: number) {
+		if (this.isSad) {
+			this.updateSad(delta);
+			return;
+		}
+
 		this.updateMovement(delta);
+	}
+
+	private handleGemStolen(robotBodyId: any) {
+		if (robotBodyId !== this.bodyId) {
+			return;
+		}
+
+		this.enterSadState();
+	}
+
+	private enterSadState() {
+		this.isSad = true;
+		this.sadTimeLeft = this.randomSadDuration();
+		this.isGrabbing = false;
+		this.isHolding = false;
+		this.isLifting = false;
+		this.isReturning = false;
+		this.heldGem = null;
+		this.pickupTarget = null;
+		this.idleWanderTarget = null;
+		this.idleWanderPause = 0;
+		this.idleWanderStartDelay = 0;
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		this.animationState.setAnimation(0, "idle", true);
+		(this.animationState as any).timeScale = 0;
+		this.setBlinkVisible(false);
+		this.setSadVisible(true);
+	}
+
+	private updateSad(delta: number) {
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+		this.sadTimeLeft -= delta;
+		if (this.sadTimeLeft > 0) {
+			return;
+		}
+
+		this.exitSadState();
+	}
+
+	private exitSadState() {
+		this.isSad = false;
+		this.sadTimeLeft = 0;
+		(this.animationState as any).timeScale = 1;
+		this.setSadVisible(false);
+		this.setBlinkVisible(false);
+		this.animationState.setAnimation(0, "idle", true);
+		this.idleWanderStartDelay = this.randomIdleEnterDelay();
 	}
 
 	// Write your code here.
@@ -312,6 +374,14 @@ export default class Robot extends SpineGameObject {
 		this.blinkSlot.color.a = visible ? 1 : 0;
 	}
 
+	private setSadVisible(visible: boolean) {
+		if (!this.sadSlot) {
+			return;
+		}
+
+		this.sadSlot.color.a = visible ? 1 : 0;
+	}
+
 	private playGrabAnimation() {
 		const grabEntry = this.animationState.setAnimation(0, "agarrar", false);
 		grabEntry.listener = {
@@ -322,11 +392,17 @@ export default class Robot extends SpineGameObject {
 					const liftBasePosition = this.isValidPosition(this.lastKnownPosition)
 						? this.lastKnownPosition
 						: b2Body_GetPosition(this.bodyId);
-					this.targetPosition = new b2Vec2(liftBasePosition.x, liftBasePosition.y + this.liftDistance);
+					const offscreenLiftY = this.getOffscreenLiftTargetY();
+					const targetLiftY = Math.max(liftBasePosition.y + this.liftDistance, offscreenLiftY);
+					this.targetPosition = new b2Vec2(liftBasePosition.x, targetLiftY);
 					this.isLifting = true;
 				}
 			}
 		};
+	}
+
+	private getOffscreenLiftTargetY() {
+		return pxm(this.scene.scale.height + 1400);
 	}
 
 	private isValidPosition(position: { x: number; y: number }) {
@@ -435,6 +511,10 @@ export default class Robot extends SpineGameObject {
 
 	private randomBlinkDelay() {
 		return this.blinkMinDelay + Math.random() * (this.blinkMaxDelay - this.blinkMinDelay);
+	}
+
+	private randomSadDuration() {
+		return this.sadMinMs + Math.random() * (this.sadMaxMs - this.sadMinMs);
 	}
 
 	/* END-USER-CODE */

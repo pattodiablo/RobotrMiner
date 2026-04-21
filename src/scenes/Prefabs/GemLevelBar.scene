@@ -1,0 +1,174 @@
+{
+    "id": "a5612b5d-ede6-432e-807b-9c81b24ddf28",
+    "sceneType": "PREFAB",
+    "settings": {
+        "exportClass": true,
+        "autoImport": true,
+        "preloadMethodName": "",
+        "preloadPackFiles": [],
+        "createMethodName": "",
+        "compilerOutputLanguage": "TYPE_SCRIPT",
+        "borderWidth": 1031,
+        "borderHeight": 530
+    },
+    "displayList": [
+        {
+            "type": "Container",
+            "id": "8fa9da7e-ea4e-42a0-816e-74eff3b987f4",
+            "label": "container_1",
+            "y": -1,
+            "list": [
+                {
+                    "type": "Image",
+                    "id": "2d2bf693-1ae5-406d-9279-38d17023d93d",
+                    "label": "levelBar",
+                    "scope": "CLASS",
+                    "texture": {
+                        "key": "LevelBar"
+                    },
+                    "y": 1,
+                    "scaleX": 0.8870949428367877,
+                    "originX": 0,
+                    "originY": 0
+                },
+                {
+                    "type": "Image",
+                    "id": "83d558c6-8b4a-42b6-9140-935f496da413",
+                    "label": "Level0",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 32,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "b9cbb5dd-5055-425a-bcc7-431cb6599db6",
+                    "label": "Level1",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 67,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "2f6f7969-7910-4aca-a1d2-8d60c5e63fa2",
+                    "label": "Level2",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 102,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "53e14b16-dc70-4df8-bfbc-ef6234941b0e",
+                    "label": "Level3",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 137,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "8ef69584-1993-4bb3-b700-5eb7a2b0b670",
+                    "label": "Level4",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 172,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "30c014c0-b3a7-48a0-9ca5-52f0b75a2269",
+                    "label": "Level5",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 207,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "3c391d2a-5062-46f9-b661-b07d7fa107fa",
+                    "label": "Level6",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 242,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "4262e6ee-528e-45f6-86d6-320d596bdc73",
+                    "label": "Level7",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 277,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "0c4360b3-3f10-441b-9ccf-2a1c64cb825f",
+                    "label": "Level8",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 313,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "2220b53a-d5d3-4440-bbcb-b67c3c584c73",
+                    "label": "Level9",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 347,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "7dbedc83-933e-4086-9065-d6e26cd56ae2",
+                    "label": "Level10",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 383,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "0f4dd046-d323-4f30-81b3-dc371b10ec8f",
+                    "label": "Level11",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 418,
+                    "y": 28
+                },
+                {
+                    "type": "Image",
+                    "id": "9406b218-8513-4448-a136-910e149a65a8",
+                    "label": "Level12",
+                    "texture": {
+                        "key": "LevelOff"
+                    },
+                    "x": 453,
+                    "y": 28
+                }
+            ]
+        }
+    ],
+    "plainObjects": [],
+    "meta": {
+        "app": "Phaser Editor - Scene Editor",
+        "url": "https://phaser.io/editor",
+        "contentType": "phasereditor2d.core.scene.SceneContentType",
+        "version": 5
+    }
+}
