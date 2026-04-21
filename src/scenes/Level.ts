@@ -66,9 +66,9 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 
 		// background
-		const background = this.add.image(-400, -64, "background");
-		background.scaleX = 0.9512865035643506;
-		background.scaleY = 0.9239612142903928;
+		const background = this.add.image(-224, -1120, "background");
+		background.scaleX = 1.4447549335068692;
+		background.scaleY = 1.3284569248044262;
 		background.setOrigin(0, 0);
 
 		// pared1
@@ -185,6 +185,9 @@ export default class Level extends Phaser.Scene {
 		const levelBar = new GemLevelBar(this, 16, 16);
 		this.add.existing(levelBar);
 
+		// powerMachine
+		this.add.image(560, -336, "PowerMachine");
+
 		this.levelBase = levelBase;
 		this.levelBase2 = levelBase2;
 		this.processBtn = processBtn;
@@ -225,6 +228,7 @@ export default class Level extends Phaser.Scene {
 	private debugCanvas: HTMLCanvasElement | null = null;
 	private debugContext: CanvasRenderingContext2D | null = null;
 	private debugDraw: any = null;
+	private bloomEffect?: Phaser.Types.Actions.AddEffectBloomReturn;
 	private debugEnabled = false;
 	private debugToggleKey!: Phaser.Input.Keyboard.Key;
 	private levelOpened = false;
@@ -233,6 +237,7 @@ export default class Level extends Phaser.Scene {
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
 	private levelBaseBodyId!: any;
+	private maxGemLevelReached = 0;
 	private levelBase2BodyId!: any;
 	private readonly levelOpenShiftX = 240;
 	private readonly levelOpenCameraOffset = 650;
@@ -273,6 +278,7 @@ export default class Level extends Phaser.Scene {
 		this.createLevelBounds();
 		this.initialCameraScrollY = this.cameras.main.scrollY;
 		this.secondLevelGemMinY = this.levelBase2.y - 240;
+		this.setupBloomEffect();
 		this.setupProcessButton();
 		this.setupReturnButton();
 		this.setupBox2DDebug();
@@ -295,6 +301,7 @@ export default class Level extends Phaser.Scene {
 
 		this.updateCarriedGem();
 		WorldStep({ worldId: this.worldId, deltaTime: delta / 1000 });
+		this.handleSecondLevelRocks();
 		this.handleGemMerges();
 		this.handleRockImpacts();
 		this.gems.forEach((gem) => gem.updateHold());
@@ -354,6 +361,29 @@ export default class Level extends Phaser.Scene {
 		}
 	}
 
+	private setupBloomEffect() {
+		this.bloomEffect?.parallelFilters.destroy();
+		const bloomEffects = Phaser.Actions.AddEffectBloom(this.cameras.main, {
+			threshold: 0.3,
+			blurRadius: 0.10,
+			blurSteps: 2,
+			blurQuality: 2,
+			blendAmount: 0.85,
+			blendMode: Phaser.BlendModes.ADD,
+		});
+		this.bloomEffect = bloomEffects[0];
+	}
+
+	private handleSecondLevelRocks() {
+		for (const child of this.children.list) {
+			if (!(child instanceof Roca)) {
+				continue;
+			}
+
+			child.breakIfInSecondLevel(this.secondLevelGemMinY);
+		}
+	}
+
 	private spawnRock(x: number, y: number) {
 		const rock = new Roca(this, x, y);
 		this.add.existing(rock);
@@ -365,6 +395,12 @@ export default class Level extends Phaser.Scene {
 			gem.setSecondLevelMinY(this.secondLevelGemMinY);
 			this.gems.push(gem);
 		}
+		this.updateGemLevelBar(gem.getBirthType());
+	}
+
+	private updateGemLevelBar(level: number) {
+		this.maxGemLevelReached = Math.max(this.maxGemLevelReached, level);
+		this.levelBar.setMaxGemLevel(this.maxGemLevelReached);
 	}
 
 	public unregisterGem(gem: Gema) {
@@ -424,6 +460,7 @@ export default class Level extends Phaser.Scene {
 		this.moneyTween?.stop();
 		const startValue = this.moneyDisplayValue;
 		const targetValue = this.moneyValue;
+		this.levelBar.setMaxGemLevel(this.maxGemLevelReached);
 		const tweenState = { value: startValue };
 
 		this.moneyTween = this.tweens.addCounter({
@@ -669,6 +706,10 @@ export default class Level extends Phaser.Scene {
 				continue;
 			}
 
+			if (gemA.isInSecondLevel() || gemB.isInSecondLevel()) {
+				continue;
+			}
+
 			if (!gemA.canMerge() || !gemB.canMerge()) {
 				continue;
 			}
@@ -682,82 +723,7 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private handleRockImpacts() {
-		const contactEvents = b2World_GetContactEvents(this.worldId);
-		if (!contactEvents.beginEvents || contactEvents.beginCount === 0) {
-			return;
-		}
-
-		const levelBase2ShapeId = this.getLevelBase2ShapeId();
-		const secondLevelRocks = new Set<Roca>();
-		const contactedRocks = new Set<Roca>();
-
-		for (let index = 0; index < contactEvents.beginCount; index += 1) {
-			const contact = contactEvents.beginEvents[index];
-			if (levelBase2ShapeId) {
-				if (this.sameShapeId(contact.shapeIdA, levelBase2ShapeId)) {
-					const rock = this.findRockByShapeId(contact.shapeIdB);
-					if (rock) {
-						secondLevelRocks.add(rock);
-					}
-				}
-
-				if (this.sameShapeId(contact.shapeIdB, levelBase2ShapeId)) {
-					const rock = this.findRockByShapeId(contact.shapeIdA);
-					if (rock) {
-						secondLevelRocks.add(rock);
-					}
-				}
-			}
-
-			const rockA = this.findRockByShapeId(contact.shapeIdA);
-			const rockB = this.findRockByShapeId(contact.shapeIdB);
-			if (rockA && secondLevelRocks.has(rockA)) {
-				continue;
-			}
-
-			if (rockB && secondLevelRocks.has(rockB)) {
-				continue;
-			}
-
-			if (!rockA || !rockB || rockA === rockB) {
-				continue;
-			}
-
-			if (rockA.canBreakFromCollision()) {
-				rockA.breakFromCollision();
-			}
-
-			if (rockB.canBreakFromCollision()) {
-				rockB.breakFromCollision();
-			}
-
-			contactedRocks.add(rockA);
-			contactedRocks.add(rockB);
-		}
-
-		for (const rock of secondLevelRocks) {
-			rock.breakOnSecondLevel?.();
-		}
-
-		for (let index = 0; index < contactEvents.beginCount; index += 1) {
-			const contact = contactEvents.beginEvents[index];
-			const rockA = this.findRockByShapeId(contact.shapeIdA);
-			const rockB = this.findRockByShapeId(contact.shapeIdB);
-
-			if (rockA && rockB) {
-				if (secondLevelRocks.has(rockA) || secondLevelRocks.has(rockB)) {
-					continue;
-				}
-				continue;
-			}
-
-			const rock = rockA || rockB;
-			if (!rock || contactedRocks.has(rock) || secondLevelRocks.has(rock)) {
-				continue;
-			}
-
-			rock.disarmCollisionBreak();
-		}
+		return;
 	}
 
 	private findGemByShapeId(shapeId: any) {

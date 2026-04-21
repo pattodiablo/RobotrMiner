@@ -30,9 +30,10 @@ import {
 /* END-USER-IMPORTS */
 
 export default class Roca extends Phaser.GameObjects.Image {
+	private readonly rockTextureKeys = ["roca1", "roca2", "roca3"];
 
 	constructor(scene: Phaser.Scene, x?: number, y?: number, texture?: string, frame?: number | string) {
-		super(scene, x ?? 0, y ?? 0, texture || "roca1", frame);
+		super(scene, x ?? 0, y ?? 0, texture || Roca.pickRandomTextureKey(), frame);
 
 		this.scaleX = 0.2939291756479111;
 		this.scaleY = 0.2939291756479111;
@@ -146,6 +147,15 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 	canBreakFromCollision() {
 		return this.collisionBreakArmed && !this.destroyed;
+	}
+
+	breakIfInSecondLevel(minY: number) {
+		if (this.destroyed || this.y < minY) {
+			return false;
+		}
+
+		this.breakOnSecondLevel();
+		return true;
 	}
 
 	disarmCollisionBreak() {
@@ -266,7 +276,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 			const angle = (Math.PI * 2 * index) / childCount + Math.random() * 0.4;
 			const offsetX = Math.cos(angle) * spread;
 			const offsetY = Math.sin(angle) * spread * 0.6;
-			const child = new Roca(this.scene, this.x + offsetX, this.y + offsetY, this.texture.key);
+			const child = new Roca(this.scene, this.x + offsetX, this.y + offsetY);
 			child.configureRock(childSize, this.randomHitCount());
 			this.scene.add.existing(child);
 			this.applyBreakImpulse(child, Math.sign(offsetX) || 1, 1.5 + Math.random() * 0.8);
@@ -335,6 +345,11 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 	private randomSizeMultiplier() {
 		return 0.6 + Math.random() * 0.5;
+	}
+
+	private static pickRandomTextureKey() {
+		const textureKeys = ["roca1", "roca2", "roca3"];
+		return textureKeys[Math.floor(Math.random() * textureKeys.length)];
 	}
 
 	/* END-USER-CODE */

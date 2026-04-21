@@ -22,10 +22,10 @@
             "texture": {
                 "key": "background"
             },
-            "x": -400,
-            "y": -64,
-            "scaleX": 0.9512865035643506,
-            "scaleY": 0.9239612142903928,
+            "x": -224,
+            "y": -1120,
+            "scaleX": 1.4447549335068692,
+            "scaleY": 1.3284569248044262,
             "originX": 0,
             "originY": 0
         },
@@ -236,6 +236,16 @@
             "scope": "CLASS",
             "x": 16,
             "y": 16
+        },
+        {
+            "type": "Image",
+            "id": "ea05f845-4afe-4c0e-b4b1-145e7e06413e",
+            "label": "powerMachine",
+            "texture": {
+                "key": "PowerMachine"
+            },
+            "x": 560,
+            "y": -336
         }
     ],
     "plainObjects": [],

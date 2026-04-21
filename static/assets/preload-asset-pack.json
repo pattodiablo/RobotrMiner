@@ -112,6 +112,11 @@
                 "key": "levelBase"
             },
             {
+                "url": "assets/images/leveler.png",
+                "type": "image",
+                "key": "leveler"
+            },
+            {
                 "url": "assets/images/LevelOff.png",
                 "type": "image",
                 "key": "LevelOff"
@@ -138,6 +143,11 @@
                 "key": "PlayerBot"
             },
             {
+                "url": "assets/images/PowerMachine.png",
+                "type": "image",
+                "key": "PowerMachine"
+            },
+            {
                 "url": "assets/images/ProcessBtn.png",
                 "type": "image",
                 "key": "ProcessBtn"
@@ -151,6 +161,16 @@
                 "url": "assets/images/roca1.png",
                 "type": "image",
                 "key": "roca1"
+            },
+            {
+                "url": "assets/images/roca2.png",
+                "type": "image",
+                "key": "roca2"
+            },
+            {
+                "url": "assets/images/roca3.png",
+                "type": "image",
+                "key": "roca3"
             },
             {
                 "url": "assets/images/smallGem1.png",

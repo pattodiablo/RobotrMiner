@@ -27,7 +27,7 @@
                         "key": "LevelBar"
                     },
                     "y": 1,
-                    "scaleX": 0.8870949428367877,
+                    "scaleX": 0.8924202966554321,
                     "originX": 0,
                     "originY": 0
                 },
@@ -36,7 +36,7 @@
                     "id": "83d558c6-8b4a-42b6-9140-935f496da413",
                     "label": "Level0",
                     "texture": {
-                        "key": "LevelOff"
+                        "key": "smallGem1"
                     },
                     "x": 32,
                     "y": 28
