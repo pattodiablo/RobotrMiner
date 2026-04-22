@@ -37,6 +37,11 @@
                 "key": "debree1"
             },
             {
+                "url": "assets/images/degradadoOven.png",
+                "type": "image",
+                "key": "degradadoOven"
+            },
+            {
                 "url": "assets/images/gem1.png",
                 "type": "image",
                 "key": "gem1"
@@ -54,12 +59,12 @@
             {
                 "url": "assets/images/gem13.png",
                 "type": "image",
-                "key": "gem13"
+                "key": "gem12"
             },
             {
                 "url": "assets/images/gem14.png",
                 "type": "image",
-                "key": "gem14"
+                "key": "gem13"
             },
             {
                 "url": "assets/images/gem2.png",
@@ -120,6 +125,11 @@
                 "url": "assets/images/gema4.png",
                 "type": "image",
                 "key": "gema4"
+            },
+            {
+                "url": "assets/images/HUDAlert.png",
+                "type": "image",
+                "key": "HUDAlert"
             },
             {
                 "url": "assets/images/LevelBar.png",

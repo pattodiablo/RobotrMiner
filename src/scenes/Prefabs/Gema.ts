@@ -55,7 +55,6 @@ const BIRTH_TEXTURE_KEYS = [
 	"gem11",
 	"gem12",
 	"gem13",
-	"gem14",
 ] as const;
 
 /* END-USER-IMPORTS */
@@ -105,6 +104,9 @@ export default class Gema extends Phaser.GameObjects.Image {
 	private mouseCarried = false;
 	private collisionsDisabled = false;
 	private consuming = false;
+	private ovened = false;
+	private ovenPulseTween?: Phaser.Tweens.Tween;
+	private ovenLifetimeTimer?: Phaser.Time.TimerEvent;
 	private secondLevelMinY = Number.POSITIVE_INFINITY;
 
 	setSecondLevelMinY(minY: number) {
@@ -149,6 +151,58 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 	canMerge() {
 		return !this.destroyed && !this.merging && !this.consuming;
+	}
+
+	isOvened() {
+		return this.ovened;
+	}
+
+	updateOvenState() {
+		if (this.destroyed || this.consuming || this.ovened || this.mouseCarried || this.held) {
+			return;
+		}
+
+		if (!this.isInsideOvenSection()) {
+			return;
+		}
+
+		this.ovened = true;
+		this.setTint(0xc78a3f);
+		this.setAlpha(0.9);
+		this.setBlendMode(Phaser.BlendModes.NORMAL);
+
+		this.ovenPulseTween?.remove();
+		this.ovenPulseTween = this.scene.tweens.add({
+			targets: this,
+			alpha: { from: 0.9, to: 1 },
+			scaleX: { from: this.scaleX, to: this.scaleX * 1.05 },
+			scaleY: { from: this.scaleY, to: this.scaleY * 1.05 },
+			angle: { from: -1.2, to: 1.2 },
+			duration: 170,
+			yoyo: true,
+			repeat: -1,
+			ease: "Sine.easeInOut",
+			onUpdate: () => {
+				if (!this.bodyId) {
+					return;
+				}
+
+				b2Body_SetAwake(this.bodyId, true);
+			},
+		});
+
+		this.ovenLifetimeTimer?.remove(false);
+		const scene = this.scene as any;
+		this.ovenLifetimeTimer = scene.time.delayedCall(120000, () => {
+			if (this.destroyed || !this.ovened) {
+				return;
+			}
+
+			const explodeX = this.x;
+			const explodeY = this.y;
+			this.destroyGem(false);
+			scene.spawnRewardCoins?.(explodeX, explodeY, this.getRewardValue(), 8);
+		});
 	}
 
 	canBeTargetedByRobot(robotBodyId: any) {
@@ -350,6 +404,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 		}
 
 		this.consuming = true;
+		this.ovened = true;
 		this.disableInteractive();
 		this.setDepth(1200);
 		this.setCollisionsEnabled(false);
@@ -359,14 +414,12 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 		const startX = this.x;
 		const startY = this.y;
-		const startScaleX = this.scaleX;
-		const startScaleY = this.scaleY;
 
 		this.scene.tweens.killTweensOf(this);
 		this.scene.tweens.add({
 			targets: this,
-			scaleX: { from: startScaleX, to: 0.05 },
-			scaleY: { from: startScaleY, to: 0.05 },
+			scaleX: { from: this.scaleX, to: 0.05 },
+			scaleY: { from: this.scaleY, to: 0.05 },
 			duration: 180,
 			ease: "Cubic.easeIn",
 			onUpdate: () => {
@@ -374,8 +427,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 				b2Body_SetAwake(this.bodyId, true);
 			},
 			onComplete: () => {
-				(this.scene as any).addReactorEnergy?.(this.getRewardValue());
-				(this.scene as any).spawnRewardCoins?.(startX, startY, this.getRewardValue(), 6);
+				if (this.ovened) {
+					(this.scene as any).addReactorEnergy?.(this.getRewardValue());
+					(this.scene as any).spawnRewardCoins?.(startX, startY, this.getRewardValue(), 6);
+				}
 				this.destroyGem(false);
 			},
 		});
@@ -429,6 +484,16 @@ export default class Gema extends Phaser.GameObjects.Image {
 		return this.x >= bounds.left && this.x <= bounds.right && this.y >= bounds.top && this.y <= bounds.bottom;
 	}
 
+	private isInsideOvenSection() {
+		const levelBase = (this.scene as any).levelBase as Phaser.GameObjects.Image | undefined;
+		if (!levelBase) {
+			return false;
+		}
+
+		const ovenFloorY = levelBase.y;
+		return this.y >= ovenFloorY && this.y < this.secondLevelMinY;
+	}
+
 	updateHold() {
 		if (this.destroyed || !this.heldRobotBodyId || !this.bodyId) {
 			return;
@@ -449,6 +514,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 		this.destroyed = true;
 		this.consuming = false;
+		this.ovenPulseTween?.remove();
+		this.ovenPulseTween = undefined;
+		this.ovenLifetimeTimer?.remove(false);
+		this.ovenLifetimeTimer = undefined;
 		this.mergeTween?.remove();
 		this.mergeTween = undefined;
 		this.releaseRobotReservation();

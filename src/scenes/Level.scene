@@ -61,7 +61,7 @@
             "id": "d0acca49-6823-4e3c-8f42-8cc177e5840d",
             "label": "pared1",
             "positionX": -100,
-            "positionY": -604,
+            "positionY": -440,
             "list": [
                 {
                     "type": "b2BoxShape",
@@ -112,7 +112,7 @@
                 "key": "levelBase"
             },
             "x": 515,
-            "y": 916,
+            "y": 1051,
             "list": [
                 {
                     "type": "b2Body",
@@ -120,7 +120,7 @@
                     "label": "body_2",
                     "scope": "CLASS",
                     "positionX": 515,
-                    "positionY": -916,
+                    "positionY": -1051,
                     "list": [
                         {
                             "type": "b2BoxShape",
@@ -219,7 +219,7 @@
             "label": "dropPlace",
             "scope": "CLASS",
             "x": 961,
-            "y": 873,
+            "y": 810,
             "scaleX": 1.9458565461085149,
             "scaleY": 2.9950810927399374,
             "alpha": 0,
@@ -317,6 +317,45 @@
             "y": 476,
             "scaleX": 0.7,
             "scaleY": 0.7
+        },
+        {
+            "type": "Image",
+            "id": "e196c42f-2311-41e6-8c49-baf0ee5b28d4",
+            "label": "degradadoOven",
+            "texture": {
+                "key": "degradadoOven"
+            },
+            "x": 453,
+            "y": 915,
+            "scaleX": 9.792633136475096
+        },
+        {
+            "type": "Image",
+            "id": "0bb175ea-5230-444f-8309-badc2bbee65c",
+            "label": "HudAlert",
+            "scope": "CLASS",
+            "texture": {
+                "key": "HUDAlert"
+            },
+            "x": 432,
+            "y": 272,
+            "scaleX": 9.164778234247432,
+            "scaleY": 0.6225647197887229
+        },
+        {
+            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
+            "id": "0b201c99-40a9-4a3f-a266-5930a7a7b723",
+            "unlock": [
+                "x",
+                "y",
+                "scaleX",
+                "scaleY"
+            ],
+            "label": "robot_1",
+            "x": 446,
+            "y": 185,
+            "scaleX": 0.6136006445175658,
+            "scaleY": 0.6136006445175658
         }
     ],
     "plainObjects": [],

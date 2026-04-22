@@ -155,6 +155,14 @@ export default class Roca extends Phaser.GameObjects.Image {
 		return this.collisionBreakArmed && !this.destroyed;
 	}
 
+	mineRock() {
+		if (this.destroyed) {
+			return;
+		}
+
+		this.hitRock();
+	}
+
 	breakIfInSecondLevel(minY: number) {
 		if (this.destroyed || this.y < minY) {
 			return false;
@@ -304,7 +312,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 	private spawnGemReward() {
 		const maxGemLevelReached = (this.scene as any).getMaxGemLevelReached?.() ?? 1;
-		const rewardGemLevel = Phaser.Math.Clamp(Math.floor(maxGemLevelReached), 1, 14);
+		const rewardGemLevel = Phaser.Math.Clamp(Math.floor(maxGemLevelReached), 1, 13);
 		const gemTextureKey = `gem${Phaser.Math.Between(1, rewardGemLevel)}`;
 		const gem = new Gema(this.scene, this.x, this.y);
 		gem.configureBirthTexture(gemTextureKey);
