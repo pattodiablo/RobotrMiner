@@ -74,17 +74,6 @@
             ]
         },
         {
-            "prefabId": "899e1f4a-41d0-419f-8d07-40851e206d09",
-            "id": "22599059-c2bc-4de5-b1b4-aa4ffd47e069",
-            "unlock": [
-                "x",
-                "y"
-            ],
-            "label": "coin",
-            "x": -252,
-            "y": 129
-        },
-        {
             "type": "Image",
             "id": "802aa4dd-cbfc-4592-90ed-7a998b277daf",
             "label": "levelBase",
@@ -93,7 +82,7 @@
                 "key": "levelBase"
             },
             "x": 272,
-            "y": 496,
+            "y": 435,
             "list": [
                 {
                     "type": "b2Body",
@@ -101,7 +90,7 @@
                     "label": "body_1",
                     "scope": "CLASS",
                     "positionX": 272,
-                    "positionY": -496,
+                    "positionY": -435,
                     "list": [
                         {
                             "type": "b2BoxShape",
@@ -123,7 +112,7 @@
                 "key": "levelBase"
             },
             "x": 515,
-            "y": 1132,
+            "y": 916,
             "list": [
                 {
                     "type": "b2Body",
@@ -131,7 +120,7 @@
                     "label": "body_2",
                     "scope": "CLASS",
                     "positionX": 515,
-                    "positionY": -1132,
+                    "positionY": -916,
                     "list": [
                         {
                             "type": "b2BoxShape",
@@ -143,28 +132,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "type": "Image",
-            "id": "a58808e9-e1f2-4f0c-9978-5268d279f2aa",
-            "label": "processBtn",
-            "scope": "CLASS",
-            "texture": {
-                "key": "ProcessBtn"
-            },
-            "x": 515,
-            "y": 494
-        },
-        {
-            "type": "Image",
-            "id": "88c35b7e-2457-4fab-b40c-c64e82d84d2a",
-            "label": "returnBtn",
-            "scope": "CLASS",
-            "texture": {
-                "key": "ReturnBtn"
-            },
-            "x": 528,
-            "y": 1136
         },
         {
             "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
@@ -247,28 +214,6 @@
             ]
         },
         {
-            "type": "Image",
-            "id": "98d57044-6b0c-4513-bc9e-5d308276e79e",
-            "label": "checkBtn",
-            "scope": "CLASS",
-            "texture": {
-                "key": "CheckBtn"
-            },
-            "x": 112,
-            "y": 496
-        },
-        {
-            "type": "Image",
-            "id": "b8a2b5c4-c139-47d0-8522-381519d18bcf",
-            "label": "returnBtn2",
-            "scope": "CLASS",
-            "texture": {
-                "key": "ReturnBtn"
-            },
-            "x": 528,
-            "y": -208
-        },
-        {
             "type": "Rectangle",
             "id": "e04bbdc4-858c-4ab3-8f15-8e72ae8389ca",
             "label": "dropPlace",
@@ -307,6 +252,71 @@
             "isFilled": true,
             "width": 128,
             "height": 128
+        },
+        {
+            "type": "Image",
+            "id": "b878d148-e1af-49e8-853b-6be41ad01945",
+            "label": "console",
+            "scope": "CLASS",
+            "texture": {
+                "key": "console"
+            },
+            "x": 479,
+            "y": 467,
+            "scaleX": 0.7,
+            "scaleY": 0.7
+        },
+        {
+            "type": "Image",
+            "id": "a66699af-8d27-4a6b-8c68-413c3c19338f",
+            "label": "coreBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "CoreBtn"
+            },
+            "x": 87,
+            "y": 476,
+            "scaleX": 0.7,
+            "scaleY": 0.7
+        },
+        {
+            "type": "Image",
+            "id": "c4149b94-6163-45af-b119-d60d026d35b0",
+            "label": "clearrocksBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "ClearrocksBtn"
+            },
+            "x": 711,
+            "y": 476,
+            "scaleX": 0.7,
+            "scaleY": 0.7
+        },
+        {
+            "type": "Image",
+            "id": "6316d30c-af7f-4d81-8d80-220b89983449",
+            "label": "ovenBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "ovenBtn"
+            },
+            "x": 501,
+            "y": 476,
+            "scaleX": 0.7,
+            "scaleY": 0.7
+        },
+        {
+            "type": "Image",
+            "id": "48d123f2-0c17-4ca7-9b89-85971cd96db9",
+            "label": "miningBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "MiningBtn"
+            },
+            "x": 293,
+            "y": 476,
+            "scaleX": 0.7,
+            "scaleY": 0.7
         }
     ],
     "plainObjects": [],

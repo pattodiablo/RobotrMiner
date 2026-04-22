@@ -12,9 +12,24 @@
                 "key": "CheckBtn"
             },
             {
+                "url": "assets/images/ClearrocksBtn.png",
+                "type": "image",
+                "key": "ClearrocksBtn"
+            },
+            {
                 "url": "assets/images/coin.png",
                 "type": "image",
                 "key": "coin"
+            },
+            {
+                "url": "assets/images/console.png",
+                "type": "image",
+                "key": "console"
+            },
+            {
+                "url": "assets/images/CoreBtn.png",
+                "type": "image",
+                "key": "CoreBtn"
             },
             {
                 "url": "assets/images/debree1.png",
@@ -138,9 +153,19 @@
                 "key": "mainCharacter-atlas"
             },
             {
+                "url": "assets/images/MiningBtn.png",
+                "type": "image",
+                "key": "MiningBtn"
+            },
+            {
                 "url": "assets/images/oruguita.png",
                 "type": "image",
                 "key": "oruguita"
+            },
+            {
+                "url": "assets/images/ovenBtn.png",
+                "type": "image",
+                "key": "ovenBtn"
             },
             {
                 "url": "assets/images/paredLateral.png",

@@ -110,17 +110,13 @@ export default class Level extends Phaser.Scene {
 			restitution: 0.5
 		}, b2MakeBox(pxm(100), pxm(600)));
 
-		// coin
-		const coin = new Coin(this, -252, 129);
-		this.add.existing(coin);
-
 		// levelBase
-		const levelBase = this.add.image(272, 496, "levelBase");
+		const levelBase = this.add.image(272, 435, "levelBase");
 
 		// body_1
 		const body_1 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(272, -496)
+			position: pxmVec2(272, -435)
 		});
 
 		// add body_1 to levelBase
@@ -132,12 +128,12 @@ export default class Level extends Phaser.Scene {
 		}, b2MakeBox(pxm(570.5), pxm(60)));
 
 		// levelBase2
-		const levelBase2 = this.add.image(515, 1132, "levelBase");
+		const levelBase2 = this.add.image(515, 846, "levelBase");
 
 		// body_2
 		const body_2 = b2CreateBody(this.worldId, { 
 			...b2DefaultBodyDef(), 
-			position: pxmVec2(515, -1132)
+			position: pxmVec2(515, -846)
 		});
 
 		// add body_2 to levelBase2
@@ -147,12 +143,6 @@ export default class Level extends Phaser.Scene {
 		const shape_3 = b2CreatePolygonShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
-
-		// processBtn
-		const processBtn = this.add.image(515, 494, "ProcessBtn");
-
-		// returnBtn
-		const returnBtn = this.add.image(528, 1136, "ReturnBtn");
 
 		// robot
 		const robot = new Robot(this, this.spine, 160, 192);
@@ -190,12 +180,6 @@ export default class Level extends Phaser.Scene {
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
 
-		// checkBtn
-		const checkBtn = this.add.image(112, 496, "CheckBtn");
-
-		// returnBtn2
-		const returnBtn2 = this.add.image(528, -208, "ReturnBtn");
-
 		// dropPlace
 		const dropPlace = this.add.rectangle(961, 873, 128, 128);
 		dropPlace.scaleX = 1.9458565461085149;
@@ -215,20 +199,50 @@ export default class Level extends Phaser.Scene {
 		rockGenZone.alpha = 0;
 		rockGenZone.isFilled = true;
 
+		// console
+		const console = this.add.image(479, 467, "console");
+		console.scaleX = 0.7;
+		console.scaleY = 0.7;
+
+		// coreBtn
+		const coreBtn = this.add.image(87, 476, "CoreBtn");
+		coreBtn.scaleX = 0.7;
+		coreBtn.scaleY = 0.7;
+
+		// clearrocksBtn
+		const clearrocksBtn = this.add.image(711, 476, "ClearrocksBtn");
+		clearrocksBtn.scaleX = 0.7;
+		clearrocksBtn.scaleY = 0.7;
+
+		// ovenBtn
+		const ovenBtn = this.add.image(501, 476, "ovenBtn");
+		ovenBtn.scaleX = 0.7;
+		ovenBtn.scaleY = 0.7;
+
+		// miningBtn
+		const miningBtn = this.add.image(293, 476, "MiningBtn");
+		miningBtn.scaleX = 0.7;
+		miningBtn.scaleY = 0.7;
+
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
 		this.body_2 = body_2;
 		this.levelBase2 = levelBase2;
-		this.processBtn = processBtn;
-		this.returnBtn = returnBtn;
 		this.levelBar = levelBar;
 		this.body_4 = body_4;
 		this.levelBase3 = levelBase3;
-		this.checkBtn = checkBtn;
-		this.returnBtn2 = returnBtn2;
 		this.dropPlace = dropPlace;
 		this.generatorCore = generatorCore;
 		this.rockGenZone = rockGenZone;
+		this.console = console;
+		this.coreBtn = coreBtn;
+		this.clearrocksBtn = clearrocksBtn;
+		this.ovenBtn = ovenBtn;
+		this.miningBtn = miningBtn;
+		this.processBtn = ovenBtn;
+		this.returnBtn = clearrocksBtn;
+		this.checkBtn = coreBtn;
+		this.returnBtn2 = miningBtn;
 
 		this.events.emit("scene-awake");
 	}
@@ -243,16 +257,21 @@ export default class Level extends Phaser.Scene {
 	private levelBase!: Phaser.GameObjects.Image;
 	private body_2!: b2BodyId;
 	private levelBase2!: Phaser.GameObjects.Image;
-	private processBtn!: Phaser.GameObjects.Image;
-	private returnBtn!: Phaser.GameObjects.Image;
 	private levelBar!: GemLevelBar;
 	private body_4!: b2BodyId;
 	private levelBase3!: Phaser.GameObjects.Image;
-	private checkBtn!: Phaser.GameObjects.Image;
-	private returnBtn2!: Phaser.GameObjects.Image;
 	private dropPlace!: Phaser.GameObjects.Rectangle;
 	private generatorCore!: Phaser.GameObjects.Ellipse;
 	private rockGenZone!: Phaser.GameObjects.Rectangle;
+	private console!: Phaser.GameObjects.Image;
+	private coreBtn!: Phaser.GameObjects.Image;
+	private clearrocksBtn!: Phaser.GameObjects.Image;
+	private ovenBtn!: Phaser.GameObjects.Image;
+	private miningBtn!: Phaser.GameObjects.Image;
+	private processBtn!: Phaser.GameObjects.Image;
+	private returnBtn!: Phaser.GameObjects.Image;
+	private checkBtn!: Phaser.GameObjects.Image;
+	private returnBtn2!: Phaser.GameObjects.Image;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -348,6 +367,7 @@ export default class Level extends Phaser.Scene {
 		this.setupReturnButton2();
 		this.scheduleLevelerSpawns();
 		this.setupBox2DDebug();
+		this.setupClearRocksButton();
 		this.createMoneyHud();
 		this.createReactorHud();
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
@@ -689,9 +709,9 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private setupProcessButton() {
-		this.processBtn.setScrollFactor(1);
+		this.processBtn.setScrollFactor(0);
 		this.processBtn.setInteractive({ useHandCursor: true });
-		this.processBtn.setDepth(1500);
+		this.processBtn.setDepth(2000);
 		this.processBtn.on("pointerdown", this.openLevelAccess, this);
 	}
 
@@ -704,17 +724,23 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private setupCheckButton() {
-		this.checkBtn.setScrollFactor(1);
+		this.checkBtn.setScrollFactor(0);
 		this.checkBtn.setInteractive({ useHandCursor: true });
-		this.checkBtn.setDepth(1500);
+		this.checkBtn.setDepth(2000);
 		this.checkBtn.on("pointerdown", this.moveCameraUp, this);
 	}
 
 	private setupReturnButton2() {
-		this.returnBtn2.setScrollFactor(1);
+		this.returnBtn2.setScrollFactor(0);
 		this.returnBtn2.setInteractive({ useHandCursor: true });
-		this.returnBtn2.setDepth(1500);
+		this.returnBtn2.setDepth(2000);
 		this.returnBtn2.on("pointerdown", this.moveCameraDown, this);
+	}
+
+	private setupClearRocksButton() {
+		this.clearrocksBtn.setScrollFactor(0);
+		this.clearrocksBtn.setDepth(2000);
+		this.clearrocksBtn.disableInteractive();
 	}
 
 	private getLevelBaseBodyId() {
@@ -780,34 +806,18 @@ export default class Level extends Phaser.Scene {
 
 	private moveCameraUp() {
 		this.generatorReviewActive = true;
-		this.checkCameraTween?.stop();
-
-		const startScrollY = this.cameras.main.scrollY;
-		const targetScrollY = startScrollY - this.checkCameraOffset;
-
-		this.checkCameraTween = this.tweens.addCounter({
-			from: 0,
-			to: 1,
-			duration: 900,
-			ease: "Cubic.easeInOut",
-			onUpdate: (tween) => {
-				const progress = Number(tween.getValue() ?? 0);
-				this.cameras.main.scrollY = Phaser.Math.Linear(startScrollY, targetScrollY, progress);
-			},
-			onComplete: () => {
-				this.cameras.main.scrollY = targetScrollY;
-				this.checkCameraTween = undefined;
-			},
-		});
+		this.moveCameraTo(this.initialCameraScrollY - this.checkCameraOffset);
 	}
 
 	private moveCameraDown() {
 		this.generatorReviewActive = false;
+		this.moveCameraTo(this.initialCameraScrollY);
+	}
+
+	private moveCameraTo(targetScrollY: number) {
 		this.checkCameraTween?.stop();
 
 		const startScrollY = this.cameras.main.scrollY;
-		const targetScrollY = startScrollY + this.checkCameraOffset;
-
 		this.checkCameraTween = this.tweens.addCounter({
 			from: 0,
 			to: 1,
