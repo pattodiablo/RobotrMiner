@@ -87,9 +87,9 @@ export default class Robot extends SpineGameObject {
 	private blinkCooldown = 0;
 	private blinkDuration = 0;
 	private blinking = false;
-	private readonly blinkMinDelay = 1800;
-	private readonly blinkMaxDelay = 4200;
-	private readonly blinkVisibleMs = 140;
+	private readonly blinkMinDelay = 2600;
+	private readonly blinkMaxDelay = 5600;
+	private readonly blinkVisibleMs = 180;
 	private readonly movementThreshold = 0.05;
 	private liftDistance = pxm(900);
 	private readonly returnThreshold = 0.05;
