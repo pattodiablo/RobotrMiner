@@ -109,6 +109,7 @@ export default class Robot extends SpineGameObject {
 	private isHolding = false;
 	private heldGem: any = null;
 	private pickupTarget: { x: number; y: number } | null = null;
+	private pickupStartPosition: { x: number; y: number } | null = null;
 	private isLifting = false;
 	private isReturning = false;
 	private idleWanderStartDelay = 0;
@@ -143,6 +144,7 @@ export default class Robot extends SpineGameObject {
 		this.isReturning = false;
 		this.heldGem = null;
 		this.pickupTarget = null;
+		this.pickupStartPosition = null;
 		this.idleWanderTarget = null;
 		this.idleWanderPause = 0;
 		this.idleWanderStartDelay = 0;
@@ -194,6 +196,7 @@ export default class Robot extends SpineGameObject {
 
 		this.isGrabbing = true;
 		this.heldGem = gem;
+		this.pickupStartPosition = b2Body_GetPosition(this.bodyId);
 		this.pickupTarget = { x: gem.x, y: gem.y - 100 };
 		this.moveTo(this.pickupTarget.x, this.pickupTarget.y);
 	}
@@ -390,9 +393,9 @@ export default class Robot extends SpineGameObject {
 				this.animationState.setAnimation(0, "agarrando", true);
 				if (this.heldGem) {
 					this.heldGem.beginHold(this.bodyId);
-					const liftBasePosition = this.isValidPosition(this.lastKnownPosition)
+					const liftBasePosition = this.pickupStartPosition ?? (this.isValidPosition(this.lastKnownPosition)
 						? this.lastKnownPosition
-						: b2Body_GetPosition(this.bodyId);
+						: b2Body_GetPosition(this.bodyId));
 					const stackTarget = this.getStackTargetPosition(liftBasePosition.x);
 					this.targetPosition = stackTarget;
 					this.isLifting = true;
@@ -434,6 +437,7 @@ export default class Robot extends SpineGameObject {
 		this.isHolding = false;
 		this.isGrabbing = false;
 		this.pickupTarget = null;
+		this.pickupStartPosition = null; // Clear the pickup start position
 		this.idleWanderTarget = null;
 		this.idleWanderPause = 0;
 		this.idleWanderStartDelay = this.randomIdleEnterDelay();
