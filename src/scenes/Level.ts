@@ -382,6 +382,7 @@ export default class Level extends Phaser.Scene {
 	private levelerInstanceCount = 1;
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
 	private ambienceTimer?: Phaser.Time.TimerEvent;
+	private miningButtonHintTimer?: Phaser.Time.TimerEvent;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
 	private generatorReviewActive = false;
@@ -398,8 +399,10 @@ export default class Level extends Phaser.Scene {
 	private readonly ambienceInitialDelayMax = 26000;
 	private readonly ambienceRepeatDelayMin = 18000;
 	private readonly ambienceRepeatDelayMax = 42000;
+	private readonly miningButtonHintRockThreshold = 5;
 	private hudAlertBaseScaleX = 0;
 	private hudAlertBaseScaleY = 0;
+	private pointerMinedRockCount = 0;
 	private createLevelBounds() {
 		const b2body = b2CreateBody(this.worldId, {
 			...b2DefaultBodyDef(),
@@ -463,6 +466,9 @@ export default class Level extends Phaser.Scene {
 			loop: false,
 		});
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
+		this.events.on("rock-pointer-mined", this.handlePointerMinedRock, this);
+		this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
+		this.events.once(Phaser.Scenes.Events.DESTROY, this.handleSceneShutdown, this);
 		this.input.on("pointermove", this.handlePointerMove, this);
 		this.input.on("pointerup", this.handlePointerUp, this);
 		this.scheduleNextRockSpawn();
@@ -841,6 +847,14 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private createReactorHud() {
+		this.hudAlertBaseScaleX = this.hudAlert.scaleX;
+		this.hudAlertBaseScaleY = this.hudAlert.scaleY;
+		this.hudAlert.setScrollFactor(0);
+		this.hudAlert.setDepth(1998);
+		this.hudAlert.setVisible(false);
+		this.hudAlert.setAlpha(0);
+		this.hudAlert.setScale(this.hudAlertBaseScaleX, this.hudAlertBaseScaleY);
+
 		this.reactorEnergyText = this.add.text(16, 78, this.formatReactorEnergy(), {
 			fontFamily: "Courier New, monospace",
 			fontSize: "22px",
@@ -1029,6 +1043,36 @@ export default class Level extends Phaser.Scene {
 		});
 	}
 
+	private playMiningButtonHint() {
+		this.miningButtonHintTimer?.remove(false);
+		this.playButtonPressEffect(this.miningBtn);
+		this.miningButtonHintTimer = this.time.delayedCall(260, () => {
+			this.playButtonPressEffect(this.miningBtn);
+			this.miningButtonHintTimer = undefined;
+		});
+	}
+
+	private handlePointerMinedRock() {
+		if (!this.isAtMiningArea()) {
+			this.pointerMinedRockCount = 0;
+			return;
+		}
+
+		this.pointerMinedRockCount += 1;
+		if (this.pointerMinedRockCount < this.miningButtonHintRockThreshold) {
+			return;
+		}
+
+		this.pointerMinedRockCount = 0;
+		this.playMiningButtonHint();
+	}
+
+	private handleSceneShutdown() {
+		this.miningButtonHintTimer?.remove(false);
+		this.miningButtonHintTimer = undefined;
+		this.events.off("rock-pointer-mined", this.handlePointerMinedRock, this);
+	}
+
 	private setupProcessButton() {
 		this.ovenBtn.setScrollFactor(0);
 		this.ovenBtn.setInteractive({ useHandCursor: true });
@@ -1146,6 +1190,7 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private handleMiningButtonPress() {
+		this.pointerMinedRockCount = 0;
 		if (!this.isAtMiningArea()) {
 			this.moveCameraDown();
 			return;

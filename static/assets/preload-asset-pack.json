@@ -3,6 +3,13 @@
         "files": [
             {
                 "url": [
+                    "assets/audios/alarm.mp3"
+                ],
+                "type": "audio",
+                "key": "alarm"
+            },
+            {
+                "url": [
                     "assets/audios/ambience1.mp3"
                 ],
                 "type": "audio",

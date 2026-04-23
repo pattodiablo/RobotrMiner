@@ -91,7 +91,11 @@ export default class Roca extends Phaser.GameObjects.Image {
 		this.createHitParticles();
 		this.configureRock(sizeMultiplier, hitPoints);
 		this.setInteractive({ useHandCursor: true });
-		this.on("pointerdown", this.hitRock, this);
+		this.on("pointerdown", this.handlePointerDown, this);
+	}
+
+	private handlePointerDown() {
+		this.hitRock("pointer");
 	}
 
 	private configureRock(sizeMultiplier: number, hitPoints: number) {
@@ -160,7 +164,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 			return;
 		}
 
-		this.hitRock();
+		this.hitRock("button");
 	}
 
 	breakIfInSecondLevel(minY: number) {
@@ -238,7 +242,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 		});
 	}
 
-	private hitRock() {
+	private hitRock(source: "pointer" | "button" | "system" = "system") {
 		if (this.destroyed) {
 			return;
 		}
@@ -249,15 +253,18 @@ export default class Roca extends Phaser.GameObjects.Image {
 			return;
 		}
 
-		this.breakRock();
+		this.breakRock(false, source);
 	}
 
-	private breakRock(forceGemReward = false) {
+	private breakRock(forceGemReward = false, source: "pointer" | "button" | "system" = "system") {
 		if (this.destroyed) {
 			return;
 		}
 
 		this.destroyed = true;
+		if (source === "pointer") {
+			this.scene.events.emit("rock-pointer-mined", this);
+		}
 		this.playBreakSound();
 		this.removeFromWorld();
 		this.spawnDebreeBurst();
@@ -282,7 +289,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 
 		this.collisionBreakArmed = false;
 
-		this.breakRock();
+		this.breakRock(false, "system");
 	}
 
 	cleanupIfBelowY(limitY: number) {
@@ -304,7 +311,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 		}
 
 		this.collisionBreakArmed = false;
-		this.breakRock(true);
+		this.breakRock(true, "system");
 	}
 
 	private spawnChildRocks() {
