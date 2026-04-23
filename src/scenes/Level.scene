@@ -164,6 +164,7 @@
             "type": "Image",
             "id": "ea05f845-4afe-4c0e-b4b1-145e7e06413e",
             "label": "powerMachine",
+            "scope": "CLASS",
             "texture": {
                 "key": "PowerMachine"
             },
@@ -356,6 +357,62 @@
             "y": 185,
             "scaleX": 0.6136006445175658,
             "scaleY": 0.6136006445175658
+        },
+        {
+            "type": "Image",
+            "id": "73d72974-9d65-4179-ad6d-e35af87b7ea1",
+            "label": "leveler1",
+            "scope": "CLASS",
+            "texture": {},
+            "x": 937,
+            "y": 1168,
+            "alpha": 0,
+            "alphaTopLeft": 0,
+            "alphaTopRight": 0,
+            "alphaBottomLeft": 0,
+            "alphaBottomRight": 0
+        },
+        {
+            "type": "Image",
+            "id": "11f47c7e-83df-4ebc-a6a1-8fd2049a9801",
+            "label": "leveler2",
+            "scope": "CLASS",
+            "texture": {},
+            "x": 954,
+            "y": -410,
+            "alpha": 0,
+            "alphaTopLeft": 0,
+            "alphaTopRight": 0,
+            "alphaBottomLeft": 0,
+            "alphaBottomRight": 0
+        },
+        {
+            "type": "Image",
+            "id": "ad1fed6d-f300-4ebf-91ed-c7927f4eef36",
+            "label": "leveler3",
+            "scope": "CLASS",
+            "texture": {},
+            "x": -113,
+            "y": -410,
+            "alpha": 0,
+            "alphaTopLeft": 0,
+            "alphaTopRight": 0,
+            "alphaBottomLeft": 0,
+            "alphaBottomRight": 0
+        },
+        {
+            "type": "Image",
+            "id": "a02a65f5-23d6-44ff-b13e-bef72e349766",
+            "label": "leveler4",
+            "scope": "CLASS",
+            "texture": {},
+            "x": -113,
+            "y": 1182,
+            "alpha": 0,
+            "alphaTopLeft": 0,
+            "alphaTopRight": 0,
+            "alphaBottomLeft": 0,
+            "alphaBottomRight": 0
         }
     ],
     "plainObjects": [],

@@ -158,11 +158,11 @@ export default class Level extends Phaser.Scene {
 		const powerMachine = this.add.image(496, -416, "PowerMachine");
 		powerMachine.scaleX = 0.7614161849074168;
 		powerMachine.scaleY = 0.7614161849074168;
-		this.powerMachine = powerMachine;
 
 		// leveler
 		const leveler = new Leveler(this, 1024, 1248);
 		this.add.existing(leveler);
+		this.leveler = leveler;
 
 		// levelBase3
 		const levelBase3 = this.add.image(272, -192, "levelBase");
@@ -240,11 +240,44 @@ export default class Level extends Phaser.Scene {
 		robot_1.scaleX = 0.6136006445175658;
 		robot_1.scaleY = 0.6136006445175658;
 
+		// leveler1
+		const leveler1 = this.add.image(937, 1168, "_MISSING");
+		leveler1.alpha = 0;
+		leveler1.alphaTopLeft = 0;
+		leveler1.alphaTopRight = 0;
+		leveler1.alphaBottomLeft = 0;
+		leveler1.alphaBottomRight = 0;
+
+		// leveler2
+		const leveler2 = this.add.image(954, -410, "_MISSING");
+		leveler2.alpha = 0;
+		leveler2.alphaTopLeft = 0;
+		leveler2.alphaTopRight = 0;
+		leveler2.alphaBottomLeft = 0;
+		leveler2.alphaBottomRight = 0;
+
+		// leveler3
+		const leveler3 = this.add.image(-113, -410, "_MISSING");
+		leveler3.alpha = 0;
+		leveler3.alphaTopLeft = 0;
+		leveler3.alphaTopRight = 0;
+		leveler3.alphaBottomLeft = 0;
+		leveler3.alphaBottomRight = 0;
+
+		// leveler4
+		const leveler4 = this.add.image(-113, 1182, "_MISSING");
+		leveler4.alpha = 0;
+		leveler4.alphaTopLeft = 0;
+		leveler4.alphaTopRight = 0;
+		leveler4.alphaBottomLeft = 0;
+		leveler4.alphaBottomRight = 0;
+
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
 		this.body_2 = body_2;
 		this.levelBase2 = levelBase2;
 		this.levelBar = levelBar;
+		this.powerMachine = powerMachine;
 		this.body_4 = body_4;
 		this.levelBase3 = levelBase3;
 		this.dropPlace = dropPlace;
@@ -256,7 +289,10 @@ export default class Level extends Phaser.Scene {
 		this.ovenBtn = ovenBtn;
 		this.miningBtn = miningBtn;
 		this.hudAlert = hudAlert;
-		this.powerMachine = powerMachine;
+		this.leveler1 = leveler1;
+		this.leveler2 = leveler2;
+		this.leveler3 = leveler3;
+		this.leveler4 = leveler4;
 
 		this.events.emit("scene-awake");
 	}
@@ -272,18 +308,23 @@ export default class Level extends Phaser.Scene {
 	private body_2!: b2BodyId;
 	private levelBase2!: Phaser.GameObjects.Image;
 	private levelBar!: GemLevelBar;
+	private powerMachine!: Phaser.GameObjects.Image;
 	private body_4!: b2BodyId;
 	private levelBase3!: Phaser.GameObjects.Image;
 	private dropPlace!: Phaser.GameObjects.Rectangle;
 	private generatorCore!: Phaser.GameObjects.Ellipse;
 	private rockGenZone!: Phaser.GameObjects.Rectangle;
 	private console!: Phaser.GameObjects.Image;
-	private powerMachine!: Phaser.GameObjects.Image;
 	private coreBtn!: Phaser.GameObjects.Image;
 	private clearrocksBtn!: Phaser.GameObjects.Image;
 	private ovenBtn!: Phaser.GameObjects.Image;
 	private miningBtn!: Phaser.GameObjects.Image;
 	private hudAlert!: Phaser.GameObjects.Image;
+	private leveler!: Leveler;
+	private leveler1!: Phaser.GameObjects.Image;
+	private leveler2!: Phaser.GameObjects.Image;
+	private leveler3!: Phaser.GameObjects.Image;
+	private leveler4!: Phaser.GameObjects.Image;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -330,6 +371,7 @@ export default class Level extends Phaser.Scene {
 	private debugDraw: any = null;
 	private bloomEffect?: Phaser.Types.Actions.AddEffectBloomReturn;
 	private powerMachinePulseTween?: Phaser.Tweens.Tween;
+	private hudAlertPulseTween?: Phaser.Tweens.Tween;
 	private buttonBaseScales = new Map<Phaser.GameObjects.Image, { scaleX: number; scaleY: number }>();
 	private debugEnabled = false;
 	private debugToggleKey!: Phaser.Input.Keyboard.Key;
@@ -339,6 +381,7 @@ export default class Level extends Phaser.Scene {
 	private levelerSpawnTimer?: Phaser.Time.TimerEvent;
 	private levelerInstanceCount = 1;
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
+	private ambienceTimer?: Phaser.Time.TimerEvent;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
 	private generatorReviewActive = false;
@@ -351,6 +394,12 @@ export default class Level extends Phaser.Scene {
 	private readonly checkCameraOffset = 650;
 	private readonly levelOpenDuration = 1500;
 	private readonly levelHoldDuration = 2200;
+	private readonly ambienceInitialDelayMin = 12000;
+	private readonly ambienceInitialDelayMax = 26000;
+	private readonly ambienceRepeatDelayMin = 18000;
+	private readonly ambienceRepeatDelayMax = 42000;
+	private hudAlertBaseScaleX = 0;
+	private hudAlertBaseScaleY = 0;
 	private createLevelBounds() {
 		const b2body = b2CreateBody(this.worldId, {
 			...b2DefaultBodyDef(),
@@ -384,6 +433,7 @@ export default class Level extends Phaser.Scene {
 		const world = CreateWorld({ worldDef });
 		this.worldId = world.worldId;
 		this.editorCreate();
+		this.leveler.setRoutePoints(this.getLevelerRoutePoints());
 		this.console.setScrollFactor(0);
 		this.console.setDepth(1498);
 		this.createLevelBounds();
@@ -400,6 +450,18 @@ export default class Level extends Phaser.Scene {
 		this.setupClearRocksButton();
 		this.createMoneyHud();
 		this.createReactorHud();
+		this.setupAmbienceSounds();
+		const bgMusic = this.sound.get("bgMusic");
+		if (!bgMusic || !bgMusic.isPlaying) {
+			this.sound.play("bgMusic", {
+				volume: 0.35,
+				loop: true,
+			});
+		}
+		this.sound.play("coreRestart", {
+			volume: 0.55,
+			loop: false,
+		});
 		this.events.on("gema-drag-start", this.beginGemCarry, this);
 		this.input.on("pointermove", this.handlePointerMove, this);
 		this.input.on("pointerup", this.handlePointerUp, this);
@@ -513,6 +575,38 @@ export default class Level extends Phaser.Scene {
 		});
 	}
 
+	private setupAmbienceSounds() {
+		this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.stopAmbienceSounds, this);
+		this.events.once(Phaser.Scenes.Events.DESTROY, this.stopAmbienceSounds, this);
+		this.scheduleNextAmbienceSound(true);
+	}
+
+	private scheduleNextAmbienceSound(initial = false) {
+		this.ambienceTimer?.remove(false);
+		const delay = initial
+			? Phaser.Math.Between(this.ambienceInitialDelayMin, this.ambienceInitialDelayMax)
+			: Phaser.Math.Between(this.ambienceRepeatDelayMin, this.ambienceRepeatDelayMax);
+
+		this.ambienceTimer = this.time.delayedCall(delay, () => {
+			this.playRandomAmbienceSound();
+			this.scheduleNextAmbienceSound(false);
+		});
+	}
+
+	private playRandomAmbienceSound() {
+		const soundKey = Math.random() < 0.5 ? "ambience1" : "ambience2";
+		this.sound.play(soundKey, {
+			volume: 0.35,
+			rate: 1,
+			loop: false,
+		});
+	}
+
+	private stopAmbienceSounds() {
+		this.ambienceTimer?.remove(false);
+		this.ambienceTimer = undefined;
+	}
+
 	private updatePowerMachinePulseRate(energyPercent: number) {
 		if (!this.powerMachinePulseTween) {
 			return;
@@ -599,9 +693,28 @@ export default class Level extends Phaser.Scene {
 				const spawnOffsetY = Math.floor(spawnIndex / 3) * this.levelerSpawnSpacingY;
 				const leveler = new Leveler(this, this.levelerSpawnX + spawnOffsetX, this.levelerSpawnY + spawnOffsetY);
 				this.add.existing(leveler);
+				leveler.setRoutePoints(this.getLevelerRoutePoints());
 				this.levelerInstanceCount += 1;
 			},
 		});
+	}
+
+	private getLevelerRoutePoints() {
+		const markers = [this.leveler1, this.leveler2, this.leveler3, this.leveler4];
+		const routePoints: Array<{ x: number; y: number }> = [];
+
+		for (const marker of markers) {
+			if (!marker) {
+				continue;
+			}
+
+			routePoints.push({
+				x: pxm(marker.x),
+				y: -pxm(marker.y),
+			});
+		}
+
+		return routePoints;
 	}
 
 	public registerGem(gem: Gema) {
@@ -643,6 +756,10 @@ export default class Level extends Phaser.Scene {
 	public spawnRewardCoins(x: number, y: number, gemValue: number, burstStrength = 4) {
 		const coinCount = Math.max(1, Math.min(8, Math.floor(Math.log2(Math.max(1, gemValue / 10))) + 1));
 		const angleOffset = Math.random() * Math.PI * 2;
+		this.sound.play("coinfall", {
+			volume: 0.45,
+			loop: false,
+		});
 
 		for (let index = 0; index < coinCount; index += 1) {
 			const angle = angleOffset + (index / coinCount) * Math.PI * 2;
@@ -773,8 +890,15 @@ export default class Level extends Phaser.Scene {
 	}
 
 	public addReactorEnergy(gemValue: number) {
+		const wasDepleted = this.reactorEnergy <= 0;
 		const energyGain = Math.max(2, Math.round(gemValue / 5));
 		this.reactorEnergy = Math.min(100, this.reactorEnergy + energyGain);
+		if (wasDepleted && this.reactorEnergy > 0) {
+			this.sound.play("coreRestart", {
+				volume: 0.55,
+				loop: false,
+			});
+		}
 		this.updateReactorHud();
 	}
 
@@ -838,6 +962,30 @@ export default class Level extends Phaser.Scene {
 		this.updatePowerMachinePulseRate(energyPercent);
 		const alertAlpha = Phaser.Math.Clamp((20 - energyPercent) / 20, 0, 1);
 		this.hudAlert.setAlpha(alertAlpha);
+		this.updateHudAlertPulse(alertAlpha);
+	}
+
+	private updateHudAlertPulse(alertAlpha: number) {
+		if (alertAlpha <= 0) {
+			this.hudAlertPulseTween?.stop();
+			this.hudAlertPulseTween = undefined;
+			this.hudAlert.setVisible(false);
+			this.hudAlert.setScale(this.hudAlertBaseScaleX, this.hudAlertBaseScaleY);
+			return;
+		}
+
+		this.hudAlert.setVisible(true);
+		if (!this.hudAlertPulseTween) {
+			this.hudAlertPulseTween = this.tweens.add({
+				targets: this.hudAlert,
+				scaleX: { from: this.hudAlertBaseScaleX, to: this.hudAlertBaseScaleX * 1.03 },
+				scaleY: { from: this.hudAlertBaseScaleY, to: this.hudAlertBaseScaleY * 1.03 },
+				duration: 900,
+				yoyo: true,
+				repeat: -1,
+				ease: "Sine.easeInOut",
+			});
+		}
 	}
 
 	private updateEnergyDemandHud() {
@@ -1049,6 +1197,12 @@ export default class Level extends Phaser.Scene {
 		if (this.levelOpened) {
 			return;
 		}
+
+		const soundKey = Math.random() < 0.5 ? "rocksFall" : "rocksFalls2";
+		this.sound.play(soundKey, {
+			volume: 0.55,
+			loop: false,
+		});
 
 		this.generatorReviewActive = false;
 		this.wakeProcessBodies();
@@ -1292,10 +1446,18 @@ export default class Level extends Phaser.Scene {
 		const mergedX = (gemA.x + gemB.x) / 2;
 		const mergedY = (gemA.y + gemB.y) / 2;
 		const textureKey = gemA.getNextBirthTextureKey();
+		const mergeSoundKey = gemA.getBirthType() >= 8
+			? (Math.random() < 0.5 ? "PowerGem1" : "PowerGem2")
+			: "gemFusion";
 
 		if (!textureKey) {
 			return;
 		}
+
+		this.sound.play(mergeSoundKey, {
+			volume: 0.5,
+			loop: false,
+		});
 
 		gemA.beginMergeAttraction(mergedX, mergedY, 220);
 		gemB.beginMergeAttraction(mergedX, mergedY, 220);

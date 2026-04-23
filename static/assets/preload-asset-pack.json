@@ -2,9 +2,58 @@
     "section1": {
         "files": [
             {
+                "url": [
+                    "assets/audios/ambience1.mp3"
+                ],
+                "type": "audio",
+                "key": "ambience1"
+            },
+            {
+                "url": [
+                    "assets/audios/ambience2.mp3"
+                ],
+                "type": "audio",
+                "key": "ambience2"
+            },
+            {
                 "url": "assets/images/background.png",
                 "type": "image",
                 "key": "background"
+            },
+            {
+                "url": [
+                    "assets/audios/bgMusic.mp3"
+                ],
+                "type": "audio",
+                "key": "bgMusic"
+            },
+            {
+                "url": [
+                    "assets/audios/break1.mp3"
+                ],
+                "type": "audio",
+                "key": "break1"
+            },
+            {
+                "url": [
+                    "assets/audios/break2.mp3"
+                ],
+                "type": "audio",
+                "key": "break2"
+            },
+            {
+                "url": [
+                    "assets/audios/break3.mp3"
+                ],
+                "type": "audio",
+                "key": "break3"
+            },
+            {
+                "url": [
+                    "assets/audios/charginCore.mp3"
+                ],
+                "type": "audio",
+                "key": "charginCore"
             },
             {
                 "url": "assets/images/CheckBtn.png",
@@ -22,6 +71,20 @@
                 "key": "coin"
             },
             {
+                "url": [
+                    "assets/audios/coinDrag.mp3"
+                ],
+                "type": "audio",
+                "key": "coinDrag"
+            },
+            {
+                "url": [
+                    "assets/audios/coinfall.mp3"
+                ],
+                "type": "audio",
+                "key": "coinfall"
+            },
+            {
                 "url": "assets/images/console.png",
                 "type": "image",
                 "key": "console"
@@ -30,6 +93,13 @@
                 "url": "assets/images/CoreBtn.png",
                 "type": "image",
                 "key": "CoreBtn"
+            },
+            {
+                "url": [
+                    "assets/audios/coreRestart.mp3"
+                ],
+                "type": "audio",
+                "key": "coreRestart"
             },
             {
                 "url": "assets/images/debree1.png",
@@ -127,6 +197,20 @@
                 "key": "gema4"
             },
             {
+                "url": [
+                    "assets/audios/coinDrag.mp3"
+                ],
+                "type": "audio",
+                "key": "gemDrag"
+            },
+            {
+                "url": [
+                    "assets/audios/gemFusion.mp3"
+                ],
+                "type": "audio",
+                "key": "gemFusion"
+            },
+            {
                 "url": "assets/images/HUDAlert.png",
                 "type": "image",
                 "key": "HUDAlert"
@@ -188,6 +272,20 @@
                 "key": "PlayerBot"
             },
             {
+                "url": [
+                    "assets/audios/PowerGem1.mp3"
+                ],
+                "type": "audio",
+                "key": "PowerGem1"
+            },
+            {
+                "url": [
+                    "assets/audios/PowerGem2.mp3"
+                ],
+                "type": "audio",
+                "key": "PowerGem2"
+            },
+            {
                 "url": "assets/images/PowerMachine.png",
                 "type": "image",
                 "key": "PowerMachine"
@@ -203,6 +301,13 @@
                 "key": "ReturnBtn"
             },
             {
+                "url": [
+                    "assets/audios/robotMoves.mp3"
+                ],
+                "type": "audio",
+                "key": "robotMoves"
+            },
+            {
                 "url": "assets/images/roca1.png",
                 "type": "image",
                 "key": "roca1"
@@ -216,6 +321,20 @@
                 "url": "assets/images/roca3.png",
                 "type": "image",
                 "key": "roca3"
+            },
+            {
+                "url": [
+                    "assets/audios/rocksFall.mp3"
+                ],
+                "type": "audio",
+                "key": "rocksFall"
+            },
+            {
+                "url": [
+                    "assets/audios/rocksFalls2.mp3"
+                ],
+                "type": "audio",
+                "key": "rocksFalls2"
             },
             {
                 "url": "assets/images/smallGem1.png",

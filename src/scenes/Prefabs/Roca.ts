@@ -226,6 +226,18 @@ export default class Roca extends Phaser.GameObjects.Image {
 		});
 	}
 
+	private playBreakSound() {
+		if (!this.scene) {
+			return;
+		}
+
+		const soundKey = Phaser.Math.RND.pick(["break1", "break2", "break3"]);
+		this.scene.sound.play(soundKey, {
+			volume: 0.55,
+			loop: false,
+		});
+	}
+
 	private hitRock() {
 		if (this.destroyed) {
 			return;
@@ -246,6 +258,7 @@ export default class Roca extends Phaser.GameObjects.Image {
 		}
 
 		this.destroyed = true;
+		this.playBreakSound();
 		this.removeFromWorld();
 		this.spawnDebreeBurst();
 

@@ -85,20 +85,41 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	// Write your code here.
 	private bodyId!: any;
 	private shapeId!: any;
-	private readonly travelSpeed = pxm(70);
+	private routePoints: Array<{ x: number; y: number }> = [];
+	private routeIndex = 0;
+	private readonly baseTravelSpeed = pxm(92);
+	private readonly minTravelSpeed = pxm(52);
 	private readonly snapThreshold = pxm(0.58);
+	private readonly routeSnapThreshold = pxm(8);
 	private readonly targetY = 15;
-	private readonly targetX = 0;
-	private readonly horizontalTurnAngleDegrees = 90;
-	private readonly horizontalTurnRamp = 0.45;
-	private readonly rotationReturnRate = 6;
+	private readonly targetX = -5;
 	private startX!: number;
 	private startY!: number;
 	private movementPhase = 0;
-	private currentTiltAngleDegrees = 0;
+
+	setRoutePoints(points: Array<{ x: number; y: number }>) {
+		this.routePoints = points.filter((point) => point !== null && point !== undefined).map((point) => ({
+			x: point.x,
+			y: point.y,
+		}));
+		this.routeIndex = 0;
+	}
+
+	private getTravelSpeed() {
+		const scene = this.scene as any;
+		const reactorEnergy = Phaser.Math.Clamp(Number(scene.reactorEnergy ?? 100), 0, 100);
+		const energyFactor = Phaser.Math.Linear(0.7, 1.25, reactorEnergy / 100);
+		return Math.max(this.minTravelSpeed, this.baseTravelSpeed * energyFactor);
+	}
 
 	private handleSceneUpdate(_time: number, delta: number) {
 		if (!this.bodyId) {
+			return;
+		}
+
+		const travelSpeed = this.getTravelSpeed();
+		if (this.routePoints.length >= 2) {
+			this.handleRouteMovement(delta, travelSpeed);
 			return;
 		}
 
@@ -113,18 +134,12 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				return;
 			}
 
-			this.setBodyVelocity(0, Math.sign(deltaY) * this.travelSpeed);
-			this.easeRotationToZero(delta);
+			this.setBodyVelocity(0, Math.sign(deltaY) * travelSpeed);
 			return;
 		}
 
 		if (this.movementPhase === 1) {
 			const deltaX = this.targetX - position.x;
-			const horizontalDistance = Math.max(1, this.startX - this.targetX);
-			const traveledDistance = this.startX - position.x;
-			const progress = Phaser.Math.Clamp(traveledDistance / (horizontalDistance * this.horizontalTurnRamp), 0, 1);
-			this.currentTiltAngleDegrees = this.horizontalTurnAngleDegrees * progress;
-			this.applyCurrentTilt(position);
 
 			if (Math.abs(deltaX) <= this.snapThreshold) {
 				this.setBodyPosition(this.targetX, position.y);
@@ -133,7 +148,7 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				return;
 			}
 
-			this.setBodyVelocity(Math.sign(deltaX) * this.travelSpeed, 0);
+			this.setBodyVelocity(Math.sign(deltaX) * travelSpeed, 0);
 			return;
 		}
 
@@ -147,8 +162,7 @@ export default class Leveler extends Phaser.GameObjects.Image {
 				return;
 			}
 
-			this.setBodyVelocity(0, Math.sign(deltaY) * this.travelSpeed);
-			this.easeRotationToZero(delta);
+			this.setBodyVelocity(0, Math.sign(deltaY) * travelSpeed);
 			return;
 		}
 
@@ -161,27 +175,41 @@ export default class Leveler extends Phaser.GameObjects.Image {
 			return;
 		}
 
-		this.setBodyVelocity(Math.sign(deltaX) * this.travelSpeed, 0);
-		this.easeRotationToZero(delta);
+		this.setBodyVelocity(Math.sign(deltaX) * travelSpeed, 0);
 	}
 
-	private setBodyPosition(x: number, y: number) {
-		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(Phaser.Math.DegToRad(this.currentTiltAngleDegrees)));
-	}
-
-	private applyCurrentTilt(position = b2Body_GetPosition(this.bodyId)) {
-		b2Body_SetTransform(this.bodyId, position, b2MakeRot(Phaser.Math.DegToRad(this.currentTiltAngleDegrees)));
-	}
-
-	private easeRotationToZero(delta: number) {
-		if (Math.abs(this.currentTiltAngleDegrees) <= 0.1) {
-			this.currentTiltAngleDegrees = 0;
-			this.applyCurrentTilt();
+	private handleRouteMovement(delta: number, travelSpeed: number) {
+		const position = b2Body_GetPosition(this.bodyId);
+		const target = this.routePoints[this.routeIndex];
+		if (!target) {
 			return;
 		}
 
-		const nextAngle = Phaser.Math.Linear(this.currentTiltAngleDegrees, 0, Math.min(1, (delta / 1000) * this.rotationReturnRate));
-		this.currentTiltAngleDegrees = nextAngle;
+		const deltaX = target.x - position.x;
+		const deltaY = target.y - position.y;
+		const distance = Math.hypot(deltaX, deltaY);
+
+		if (distance <= this.routeSnapThreshold) {
+			this.setBodyPosition(target.x, target.y);
+			this.setBodyVelocity(0, 0);
+			this.routeIndex = (this.routeIndex + 1) % this.routePoints.length;
+			return;
+		}
+
+		const velocityX = (deltaX / distance) * travelSpeed;
+		const velocityY = (deltaY / distance) * travelSpeed;
+		this.setBodyVelocity(velocityX, velocityY);
+	}
+
+	private setBodyPosition(x: number, y: number) {
+		b2Body_SetTransform(this.bodyId, new b2Vec2(x, y), b2MakeRot(0));
+	}
+
+	private applyCurrentTilt(position = b2Body_GetPosition(this.bodyId)) {
+		b2Body_SetTransform(this.bodyId, position, b2MakeRot(0));
+	}
+
+	private easeRotationToZero(delta: number) {
 		this.applyCurrentTilt();
 	}
 

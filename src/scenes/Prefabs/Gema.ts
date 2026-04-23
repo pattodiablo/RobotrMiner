@@ -83,6 +83,11 @@ export default class Gema extends Phaser.GameObjects.Image {
 		/* START-USER-CTR-CODE */
 		this.setInteractive({ useHandCursor: true });
 		this.on("pointerdown", () => {
+			const soundKey = this.scene.sound.get("gemDrag") ? "gemDrag" : "coinDrag";
+			this.scene.sound.play(soundKey, {
+				volume: 0.6,
+				loop: false,
+			});
 			this.scene.events.emit("gema-drag-start", this);
 		});
 		/* END-USER-CTR-CODE */
@@ -404,6 +409,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 		}
 
 		this.consuming = true;
+		this.scene.sound.play("charginCore", {
+			volume: 0.5,
+			loop: false,
+		});
 		this.ovened = true;
 		this.disableInteractive();
 		this.setDepth(1200);

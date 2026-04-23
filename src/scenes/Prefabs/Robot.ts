@@ -117,8 +117,16 @@ export default class Robot extends SpineGameObject {
 	private isSad = false;
 	private sadTimeLeft = 0;
 	private sadSlot: any;
+	private robotMoveSoundCooldown = 0;
+	private readonly robotMoveSoundCooldownMinMs = 2200;
+	private readonly robotMoveSoundCooldownMaxMs = 4200;
+	private readonly robotMoveSoundChance = 0.7;
 
 	private handleSceneUpdate(_time: number, delta: number) {
+		if (this.robotMoveSoundCooldown > 0) {
+			this.robotMoveSoundCooldown = Math.max(0, this.robotMoveSoundCooldown - delta);
+		}
+
 		if (this.isSad) {
 			this.updateSad(delta);
 			return;
@@ -198,7 +206,20 @@ export default class Robot extends SpineGameObject {
 		this.heldGem = gem;
 		this.pickupStartPosition = b2Body_GetPosition(this.bodyId);
 		this.pickupTarget = { x: gem.x, y: gem.y - 100 };
+		this.playRobotMoveSound();
 		this.moveTo(this.pickupTarget.x, this.pickupTarget.y);
+	}
+
+	private playRobotMoveSound() {
+		if (this.robotMoveSoundCooldown > 0 || Math.random() > this.robotMoveSoundChance) {
+			return;
+		}
+
+		this.robotMoveSoundCooldown = Phaser.Math.Between(this.robotMoveSoundCooldownMinMs, this.robotMoveSoundCooldownMaxMs);
+		this.scene.sound.play("robotMoves", {
+			volume: 0.45,
+			loop: false,
+		});
 	}
 
 	private updatePickupTargetFromGem() {
