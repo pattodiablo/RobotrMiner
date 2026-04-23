@@ -71,6 +71,8 @@ export default class Robot extends SpineGameObject {
 		this.animationState.setAnimation(0, "idle", true);
 		this.scene.events.on("update", this.handleSceneUpdate, this);
 		this.scene.events.on("robot-gem-stolen", this.handleGemStolen, this);
+		this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
+		this.scene.events.once(Phaser.Scenes.Events.DESTROY, this.handleSceneShutdown, this);
 
 		/* START-USER-CTR-CODE */
 		// Write your code here.
@@ -121,8 +123,26 @@ export default class Robot extends SpineGameObject {
 	private readonly robotMoveSoundCooldownMinMs = 2200;
 	private readonly robotMoveSoundCooldownMaxMs = 4200;
 	private readonly robotMoveSoundChance = 0.7;
+	private sceneListenersRemoved = false;
+
+	private handleSceneShutdown() {
+		if (this.sceneListenersRemoved) {
+			return;
+		}
+
+		this.sceneListenersRemoved = true;
+		const currentScene = this.scene;
+		currentScene?.events.off("update", this.handleSceneUpdate, this);
+		currentScene?.events.off("robot-gem-stolen", this.handleGemStolen, this);
+		currentScene?.events.off(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown, this);
+		currentScene?.events.off(Phaser.Scenes.Events.DESTROY, this.handleSceneShutdown, this);
+	}
 
 	private handleSceneUpdate(_time: number, delta: number) {
+		if (!this.scene || !this.bodyId) {
+			return;
+		}
+
 		if (this.robotMoveSoundCooldown > 0) {
 			this.robotMoveSoundCooldown = Math.max(0, this.robotMoveSoundCooldown - delta);
 		}
@@ -252,15 +272,20 @@ export default class Robot extends SpineGameObject {
 	}
 
 	private tryAutoAcquireNearestGem() {
+		const currentScene = this.scene as any;
+		if (!currentScene) {
+			return false;
+		}
+
 		if (this.isGrabbing || this.isHolding || this.isLifting || this.isReturning) {
 			return false;
 		}
 
-		if ((this.scene as any).isGemBeingCarried?.()) {
+		if (currentScene.isGemBeingCarried?.()) {
 			return false;
 		}
 
-		const gems = (this.scene as any).gems as any[] | undefined;
+		const gems = currentScene.gems as any[] | undefined;
 		if (!gems || gems.length === 0) {
 			return false;
 		}
@@ -546,6 +571,11 @@ export default class Robot extends SpineGameObject {
 
 	private randomSadDuration() {
 		return this.sadMinMs + Math.random() * (this.sadMaxMs - this.sadMinMs);
+	}
+
+	override destroy(fromScene?: boolean) {
+		this.handleSceneShutdown();
+		super.destroy(fromScene);
 	}
 
 	/* END-USER-CODE */

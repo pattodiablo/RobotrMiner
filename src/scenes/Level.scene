@@ -29,34 +29,6 @@
             "originY": 0
         },
         {
-            "type": "Image",
-            "id": "2fa81d06-4907-455e-95e6-5c4820022301",
-            "label": "paredLateral",
-            "texture": {
-                "key": "paredLateral"
-            },
-            "x": 803,
-            "y": 192,
-            "list": [
-                {
-                    "type": "b2Body",
-                    "id": "691afc62-0c45-408a-b157-b3fc0bb1e340",
-                    "label": "body_5",
-                    "positionX": 803,
-                    "positionY": -192,
-                    "list": [
-                        {
-                            "type": "b2BoxShape",
-                            "id": "1e86f813-9b4b-471e-9b07-b33396579e6a",
-                            "label": "shape_6",
-                            "halfWidth": 39,
-                            "halfHeight": 360
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "type": "b2Body",
             "id": "d0acca49-6823-4e3c-8f42-8cc177e5840d",
             "label": "pared1",
@@ -256,6 +228,34 @@
         },
         {
             "type": "Image",
+            "id": "2fa81d06-4907-455e-95e6-5c4820022301",
+            "label": "paredLateral",
+            "texture": {
+                "key": "paredLateral"
+            },
+            "x": 803,
+            "y": 192,
+            "list": [
+                {
+                    "type": "b2Body",
+                    "id": "691afc62-0c45-408a-b157-b3fc0bb1e340",
+                    "label": "body_5",
+                    "positionX": 803,
+                    "positionY": -192,
+                    "list": [
+                        {
+                            "type": "b2BoxShape",
+                            "id": "1e86f813-9b4b-471e-9b07-b33396579e6a",
+                            "label": "shape_6",
+                            "halfWidth": 39,
+                            "halfHeight": 360
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Image",
             "id": "b878d148-e1af-49e8-853b-6be41ad01945",
             "label": "console",
             "scope": "CLASS",
@@ -291,7 +291,8 @@
             "x": 711,
             "y": 476,
             "scaleX": 0.7,
-            "scaleY": 0.7
+            "scaleY": 0.7,
+            "visible": false
         },
         {
             "type": "Image",

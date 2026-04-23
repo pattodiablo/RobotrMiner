@@ -22,6 +22,8 @@ import {
 	b2Body_SetTransform,
 	b2Body_SetAwake,
 	b2Body_SetType,
+	b2Body_SetLinearVelocity,
+	b2Body_SetAngularVelocity,
 	b2DefaultFilter,
 	SetWorldScale,
 	UpdateWorldSprites,
@@ -80,23 +82,6 @@ export default class Level extends Phaser.Scene {
 		background.scaleX = 1.4447549335068692;
 		background.scaleY = 1.3284569248044262;
 		background.setOrigin(0, 0);
-
-		// paredLateral
-		const paredLateral = this.add.image(803, 192, "paredLateral");
-
-		// body_5
-		const body_5 = b2CreateBody(this.worldId, { 
-			...b2DefaultBodyDef(), 
-			position: pxmVec2(803, -192)
-		});
-
-		// add body_5 to paredLateral
-		AddSpriteToWorld(this.worldId, paredLateral, { bodyId: body_5 });
-
-		// shape_6
-		const shape_6 = b2CreatePolygonShape(body_5, { 
-			...b2DefaultShapeDef()
-		}, b2MakeBox(pxm(39), pxm(360)));
 
 		// pared1
 		const pared1 = b2CreateBody(this.worldId, { 
@@ -162,7 +147,6 @@ export default class Level extends Phaser.Scene {
 		// leveler
 		const leveler = new Leveler(this, 1024, 1248);
 		this.add.existing(leveler);
-		this.leveler = leveler;
 
 		// levelBase3
 		const levelBase3 = this.add.image(272, -192, "levelBase");
@@ -200,6 +184,23 @@ export default class Level extends Phaser.Scene {
 		rockGenZone.alpha = 0;
 		rockGenZone.isFilled = true;
 
+		// paredLateral
+		const paredLateral = this.add.image(803, 192, "paredLateral");
+
+		// body_5
+		const body_5 = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(803, -192)
+		});
+
+		// add body_5 to paredLateral
+		AddSpriteToWorld(this.worldId, paredLateral, { bodyId: body_5 });
+
+		// shape_6
+		const shape_6 = b2CreatePolygonShape(body_5, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(39), pxm(360)));
+
 		// console
 		const console = this.add.image(479, 467, "console");
 		console.scaleX = 0.7;
@@ -214,6 +215,7 @@ export default class Level extends Phaser.Scene {
 		const clearrocksBtn = this.add.image(711, 476, "ClearrocksBtn");
 		clearrocksBtn.scaleX = 0.7;
 		clearrocksBtn.scaleY = 0.7;
+		clearrocksBtn.visible = false;
 
 		// ovenBtn
 		const ovenBtn = this.add.image(501, 476, "ovenBtn");
@@ -320,7 +322,6 @@ export default class Level extends Phaser.Scene {
 	private ovenBtn!: Phaser.GameObjects.Image;
 	private miningBtn!: Phaser.GameObjects.Image;
 	private hudAlert!: Phaser.GameObjects.Image;
-	private leveler!: Leveler;
 	private leveler1!: Phaser.GameObjects.Image;
 	private leveler2!: Phaser.GameObjects.Image;
 	private leveler3!: Phaser.GameObjects.Image;
@@ -345,15 +346,16 @@ export default class Level extends Phaser.Scene {
 	private energyDemandLabel!: Phaser.GameObjects.Text;
 	private energyDemandLights!: Phaser.GameObjects.Ellipse[];
 	private energyDemandPressure = 0;
-	private energyDemandDropTimer = 0;
-	private energyDemandNextDropDelay = 0;
+	private energyDemandTargetPressure = 0;
+	private energyDemandRetargetTimer = 0;
+	private energyDemandNextRetargetDelay = 0;
 	private readonly reactorEnergyDrainPerSecond = 0.625;
-	private readonly baseEnergyDemandGrowthPerSecond = 0.22;
-	private readonly energyDemandDropIntervalMin = 45;
-	private readonly energyDemandDropIntervalMax = 150;
-	private readonly energyDemandDropChance = 0.8;
-	private readonly energyDemandDropAmountMin = 10;
-	private readonly energyDemandDropAmountMax = 18;
+	private readonly energyDemandRisePerSecond = 0.72;
+	private readonly energyDemandFallPerSecond = 0.58;
+	private readonly energyDemandRetargetIntervalMinMs = 120000;
+	private readonly energyDemandRetargetIntervalMaxMs = 240000;
+	private readonly energyDemandTargetMin = 8;
+	private readonly energyDemandTargetMax = 100;
 
 	private readonly rockSpawnMinDelay = 2600;
 	private readonly rockSpawnMaxDelay = 7500;
@@ -383,6 +385,9 @@ export default class Level extends Phaser.Scene {
 	private levelAutoCloseTimer?: Phaser.Time.TimerEvent;
 	private ambienceTimer?: Phaser.Time.TimerEvent;
 	private miningButtonHintTimer?: Phaser.Time.TimerEvent;
+	private ovenRockCollisionTimer?: Phaser.Time.TimerEvent;
+	private gameOverDelayTimer?: Phaser.Time.TimerEvent;
+	private primaryLeveler?: Leveler;
 	private initialCameraScrollY = 0;
 	private secondLevelGemMinY = 0;
 	private generatorReviewActive = false;
@@ -400,9 +405,13 @@ export default class Level extends Phaser.Scene {
 	private readonly ambienceRepeatDelayMin = 18000;
 	private readonly ambienceRepeatDelayMax = 42000;
 	private readonly miningButtonHintRockThreshold = 5;
+	private readonly rockCollisionCategoryBit = 0x0008;
+	private readonly gameOverDelayMs = 10000;
 	private hudAlertBaseScaleX = 0;
 	private hudAlertBaseScaleY = 0;
 	private pointerMinedRockCount = 0;
+	private lowEnergyAlarmActive = false;
+	private gameOverTriggered = false;
 	private createLevelBounds() {
 		const b2body = b2CreateBody(this.worldId, {
 			...b2DefaultBodyDef(),
@@ -436,7 +445,8 @@ export default class Level extends Phaser.Scene {
 		const world = CreateWorld({ worldDef });
 		this.worldId = world.worldId;
 		this.editorCreate();
-		this.leveler.setRoutePoints(this.getLevelerRoutePoints());
+		this.primaryLeveler = this.getPrimaryLeveler();
+		this.primaryLeveler?.setRoutePoints(this.getLevelerRoutePoints());
 		this.console.setScrollFactor(0);
 		this.console.setDepth(1498);
 		this.createLevelBounds();
@@ -705,6 +715,16 @@ export default class Level extends Phaser.Scene {
 		});
 	}
 
+	private getPrimaryLeveler() {
+		for (const child of this.children.list) {
+			if (child instanceof Leveler) {
+				return child;
+			}
+		}
+
+		return undefined;
+	}
+
 	private getLevelerRoutePoints() {
 		const markers = [this.leveler1, this.leveler2, this.leveler3, this.leveler4];
 		const routePoints: Array<{ x: number; y: number }> = [];
@@ -790,10 +810,10 @@ export default class Level extends Phaser.Scene {
 
 	private createMoneyHud() {
 		this.moneyText = this.add.text(this.scale.width - 28, 24, this.formatMoneyValue(this.moneyDisplayValue), {
-			fontFamily: "Courier New, monospace",
+			fontFamily: "arial",
 			fontSize: "28px",
 			color: "#f8d66d",
-			stroke: "#1a1205",
+			stroke: "#684205",
 			strokeThickness: 6,
 			align: "right",
 		});
@@ -847,6 +867,9 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private createReactorHud() {
+		this.energyDemandTargetPressure = Phaser.Math.Between(18, 42);
+		this.energyDemandNextRetargetDelay = Phaser.Math.Between(this.energyDemandRetargetIntervalMinMs, this.energyDemandRetargetIntervalMaxMs);
+
 		this.hudAlertBaseScaleX = this.hudAlert.scaleX;
 		this.hudAlertBaseScaleY = this.hudAlert.scaleY;
 		this.hudAlert.setScrollFactor(0);
@@ -855,12 +878,12 @@ export default class Level extends Phaser.Scene {
 		this.hudAlert.setAlpha(0);
 		this.hudAlert.setScale(this.hudAlertBaseScaleX, this.hudAlertBaseScaleY);
 
-		this.reactorEnergyText = this.add.text(16, 78, this.formatReactorEnergy(), {
-			fontFamily: "Courier New, monospace",
-			fontSize: "22px",
-			color: "#8ef7b2",
-			stroke: "#0d1d12",
-			strokeThickness: 5,
+		this.reactorEnergyText = this.add.text(16, 84, this.formatReactorEnergy(), {
+			fontFamily: "arial",
+			fontSize: "12px",
+			color: "#ffffff",
+		
+		
 			align: "left",
 		});
 		this.reactorEnergyText.setScrollFactor(0);
@@ -877,12 +900,11 @@ export default class Level extends Phaser.Scene {
 		this.reactorEnergyBarFill.setDepth(2000);
 		this.updateReactorHud();
 
-		this.energyDemandLabel = this.add.text(258, 78, "Energy demand", {
-			fontFamily: "Courier New, monospace",
-			fontSize: "18px",
-			color: "#f3e6b0",
-			stroke: "#271b08",
-			strokeThickness: 4,
+		this.energyDemandLabel = this.add.text(258, 84, "ENERGY DEMAND", {
+			fontFamily: "arial",
+			fontSize: "12px",
+			color: "#ffffff",
+			
 			align: "left",
 		});
 		this.energyDemandLabel.setScrollFactor(0);
@@ -918,20 +940,23 @@ export default class Level extends Phaser.Scene {
 
 	private updateEnergyDemand(delta: number) {
 		const deltaSeconds = delta / 1000;
-		this.energyDemandPressure = Math.min(100, this.energyDemandPressure + this.baseEnergyDemandGrowthPerSecond * deltaSeconds);
-		this.energyDemandDropTimer += deltaSeconds;
+		this.energyDemandRetargetTimer += delta;
 
-		if (this.energyDemandNextDropDelay <= 0) {
-			this.energyDemandNextDropDelay = Phaser.Math.Between(this.energyDemandDropIntervalMin, this.energyDemandDropIntervalMax);
+		if (this.energyDemandNextRetargetDelay <= 0 || this.energyDemandRetargetTimer >= this.energyDemandNextRetargetDelay) {
+			this.energyDemandRetargetTimer = 0;
+			this.energyDemandNextRetargetDelay = Phaser.Math.Between(this.energyDemandRetargetIntervalMinMs, this.energyDemandRetargetIntervalMaxMs);
+			this.energyDemandTargetPressure = Phaser.Math.Between(this.energyDemandTargetMin, this.energyDemandTargetMax);
 		}
 
-		if (this.energyDemandDropTimer >= this.energyDemandNextDropDelay) {
-			this.energyDemandDropTimer = 0;
-			this.energyDemandNextDropDelay = Phaser.Math.Between(this.energyDemandDropIntervalMin, this.energyDemandDropIntervalMax);
-			if (Math.random() < this.energyDemandDropChance) {
-				this.energyDemandPressure = Math.max(0, this.energyDemandPressure - Phaser.Math.Between(this.energyDemandDropAmountMin, this.energyDemandDropAmountMax));
-			}
+		const riseStep = this.energyDemandRisePerSecond * deltaSeconds;
+		const fallStep = this.energyDemandFallPerSecond * deltaSeconds;
+		if (this.energyDemandPressure < this.energyDemandTargetPressure) {
+			this.energyDemandPressure = Math.min(this.energyDemandTargetPressure, this.energyDemandPressure + riseStep);
+		} else if (this.energyDemandPressure > this.energyDemandTargetPressure) {
+			this.energyDemandPressure = Math.max(this.energyDemandTargetPressure, this.energyDemandPressure - fallStep);
 		}
+
+		this.energyDemandPressure = Phaser.Math.Clamp(this.energyDemandPressure, 0, 100);
 
 		this.updateEnergyDemandHud();
 	}
@@ -974,32 +999,91 @@ export default class Level extends Phaser.Scene {
 		const fillColor = energyPercent > 66 ? 0x59d98a : energyPercent > 33 ? 0xf7c548 : 0xf26d6d;
 		this.reactorEnergyBarFill.setFillStyle(fillColor, 1);
 		this.updatePowerMachinePulseRate(energyPercent);
+		if (energyPercent <= 20) {
+			if (!this.lowEnergyAlarmActive) {
+				this.lowEnergyAlarmActive = true;
+				this.sound.play("alarm", {
+					volume: 0.55,
+					loop: false,
+				});
+			}
+		} else {
+			this.lowEnergyAlarmActive = false;
+		}
 		const alertAlpha = Phaser.Math.Clamp((20 - energyPercent) / 20, 0, 1);
 		this.hudAlert.setAlpha(alertAlpha);
-		this.updateHudAlertPulse(alertAlpha);
+		this.updateHudAlertPulse(alertAlpha, energyPercent);
+
+		if (energyPercent <= 0 && !this.gameOverTriggered) {
+			this.scheduleGameOver();
+		} else if (energyPercent > 0) {
+			this.cancelScheduledGameOver();
+		}
 	}
 
-	private updateHudAlertPulse(alertAlpha: number) {
+	private scheduleGameOver() {
+		if (this.gameOverTriggered || this.gameOverDelayTimer) {
+			return;
+		}
+
+		this.gameOverDelayTimer = this.time.delayedCall(this.gameOverDelayMs, () => {
+			this.gameOverDelayTimer = undefined;
+			if (this.reactorEnergy <= 0 && !this.gameOverTriggered) {
+				this.triggerGameOver();
+			}
+		});
+	}
+
+	private cancelScheduledGameOver() {
+		this.gameOverDelayTimer?.remove(false);
+		this.gameOverDelayTimer = undefined;
+	}
+
+	private updateHudAlertPulse(alertAlpha: number, energyPercent: number) {
 		if (alertAlpha <= 0) {
 			this.hudAlertPulseTween?.stop();
 			this.hudAlertPulseTween = undefined;
+			this.hudAlert.setAlpha(0);
 			this.hudAlert.setVisible(false);
 			this.hudAlert.setScale(this.hudAlertBaseScaleX, this.hudAlertBaseScaleY);
 			return;
 		}
 
+		const shouldBlink = energyPercent <= 10;
+		const targetDuration = shouldBlink ? 230 : 900;
+		const targetAlphaFrom = shouldBlink ? Math.max(0.18, alertAlpha * 0.35) : alertAlpha;
+		const targetAlphaTo = shouldBlink ? Math.min(1, alertAlpha + 0.3) : alertAlpha;
+
 		this.hudAlert.setVisible(true);
-		if (!this.hudAlertPulseTween) {
+		if (!this.hudAlertPulseTween || this.hudAlertPulseTween.duration !== targetDuration) {
+			this.hudAlertPulseTween?.stop();
 			this.hudAlertPulseTween = this.tweens.add({
 				targets: this.hudAlert,
+				alpha: { from: targetAlphaFrom, to: targetAlphaTo },
 				scaleX: { from: this.hudAlertBaseScaleX, to: this.hudAlertBaseScaleX * 1.03 },
 				scaleY: { from: this.hudAlertBaseScaleY, to: this.hudAlertBaseScaleY * 1.03 },
-				duration: 900,
+				duration: targetDuration,
 				yoyo: true,
 				repeat: -1,
 				ease: "Sine.easeInOut",
 			});
 		}
+	}
+
+	private triggerGameOver() {
+		this.gameOverTriggered = true;
+		this.cancelScheduledGameOver();
+		this.input.enabled = false;
+		this.levelOpenTween?.stop();
+		this.checkCameraTween?.stop();
+		this.levelAutoCloseTimer?.remove(false);
+		this.ambienceTimer?.remove(false);
+		this.ovenRockCollisionTimer?.remove(false);
+		this.sound.stopByKey("bgMusic");
+		this.cameras.main.fadeOut(900, 0, 0, 0);
+		this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+			this.scene.start("GameOver");
+		});
 	}
 
 	private updateEnergyDemandHud() {
@@ -1070,6 +1154,7 @@ export default class Level extends Phaser.Scene {
 	private handleSceneShutdown() {
 		this.miningButtonHintTimer?.remove(false);
 		this.miningButtonHintTimer = undefined;
+		this.cancelScheduledGameOver();
 		this.events.off("rock-pointer-mined", this.handlePointerMinedRock, this);
 	}
 
@@ -1122,6 +1207,17 @@ export default class Level extends Phaser.Scene {
 		return this.levelBaseBodyId ?? (this.levelBase as any).bodyId;
 	}
 
+	private getLevelBaseShapeId() {
+		const bodyId = this.getLevelBaseBodyId();
+		if (!bodyId) {
+			return null;
+		}
+
+		const shapeIds: any[] = [];
+		const shapeCount = b2Body_GetShapes(bodyId, shapeIds);
+		return shapeCount > 0 ? shapeIds[0] : null;
+	}
+
 	private getLevelBase2BodyId() {
 		return this.levelBase2BodyId ?? (this.levelBase2 as any).bodyId;
 	}
@@ -1135,6 +1231,19 @@ export default class Level extends Phaser.Scene {
 		const shapeIds: any[] = [];
 		const shapeCount = b2Body_GetShapes(bodyId, shapeIds);
 		return shapeCount > 0 ? shapeIds[0] : null;
+	}
+
+	private setLevelBaseRockCollisionEnabled(enabled: boolean) {
+		const levelBaseShapeId = this.getLevelBaseShapeId();
+		if (!levelBaseShapeId) {
+			return;
+		}
+
+		const filter = b2DefaultFilter();
+		filter.maskBits = enabled
+			? filter.maskBits
+			: filter.maskBits & ~this.rockCollisionCategoryBit;
+		b2Shape_SetFilter(levelBaseShapeId, filter);
 	}
 
 	private animateLevelBase(targetX: number, targetScrollY: number, onComplete: () => void) {
@@ -1251,6 +1360,12 @@ export default class Level extends Phaser.Scene {
 
 		this.generatorReviewActive = false;
 		this.wakeProcessBodies();
+		this.ovenRockCollisionTimer?.remove(false);
+		this.setLevelBaseRockCollisionEnabled(true);
+		this.ovenRockCollisionTimer = this.time.delayedCall(1000, () => {
+			this.setLevelBaseRockCollisionEnabled(false);
+			this.ovenRockCollisionTimer = undefined;
+		});
 		this.resetGemUnlockProgress();
 		this.levelOpened = true;
 		this.ovenBtn.disableInteractive();
@@ -1272,6 +1387,9 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private returnToInitialScene() {
+		this.ovenRockCollisionTimer?.remove(false);
+		this.ovenRockCollisionTimer = undefined;
+		this.setLevelBaseRockCollisionEnabled(true);
 		this.levelAutoCloseTimer?.remove(false);
 		this.levelAutoCloseTimer = undefined;
 		this.levelOpened = false;
@@ -1293,6 +1411,9 @@ export default class Level extends Phaser.Scene {
 			return;
 		}
 
+		this.ovenRockCollisionTimer?.remove(false);
+		this.ovenRockCollisionTimer = undefined;
+		this.setLevelBaseRockCollisionEnabled(true);
 		this.levelOpened = false;
 		this.levelAutoCloseTimer?.remove(false);
 		this.levelAutoCloseTimer = undefined;
@@ -1411,11 +1532,13 @@ export default class Level extends Phaser.Scene {
 
 
 	private wakeProcessBodies() {
+		if (this.carriedGem) {
+			this.carriedGem.forceProcessFall?.();
+			this.carriedGem = null;
+		}
+
 		for (const gem of this.gems) {
-			const bodyId = (gem as any).bodyId;
-			if (bodyId) {
-				b2Body_SetAwake(bodyId, true);
-			}
+			gem.forceProcessFall?.();
 		}
 
 		for (const child of this.children.list) {
@@ -1425,7 +1548,10 @@ export default class Level extends Phaser.Scene {
 
 			const bodyId = (child as any).bodyId;
 			if (bodyId) {
+				b2Body_SetType(bodyId, b2BodyType.b2_dynamicBody);
 				b2Body_SetAwake(bodyId, true);
+				b2Body_SetLinearVelocity(bodyId, new b2Vec2(0, pxm(-8)));
+				b2Body_SetAngularVelocity(bodyId, 0);
 			}
 		}
 	}

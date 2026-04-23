@@ -389,6 +389,25 @@ export default class Gema extends Phaser.GameObjects.Image {
 		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, 0));
 	}
 
+	forceProcessFall() {
+		if (this.destroyed || this.consuming || !this.bodyId) {
+			return;
+		}
+
+		this.mouseCarried = false;
+		this.held = false;
+		this.heldRobotBodyId = null;
+		this.reservedByRobotBodyId = null;
+		this.merging = false;
+		this.setDepth(0);
+		this.setAlpha(this.ovened ? 0.9 : 1);
+		this.setCollisionsEnabled(true);
+		b2Body_SetType(this.bodyId, this.dynamicBodyType);
+		b2Body_SetAwake(this.bodyId, true);
+		b2Body_SetLinearVelocity(this.bodyId, new b2Vec2(0, pxm(-8)));
+		b2Body_SetAngularVelocity(this.bodyId, 0);
+	}
+
 	beginHold(robotBodyId: any) {
 		if (this.destroyed) {
 			return;
