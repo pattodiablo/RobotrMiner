@@ -22,9 +22,9 @@
                 "key": "background"
             },
             "x": -224,
-            "y": -1120,
-            "scaleX": 1.4447549335068692,
-            "scaleY": 1.3284569248044262,
+            "y": -1449,
+            "scaleX": 1.2867719056217648,
+            "scaleY": 1.2867719056217648,
             "originX": 0,
             "originY": 0
         },
@@ -44,6 +44,18 @@
                     "halfHeight": 600
                 }
             ]
+        },
+        {
+            "type": "TileSprite",
+            "id": "865eb4c2-eb43-42fe-bc8f-a74f4d9dbda7",
+            "label": "tilesprite_1",
+            "texture": {
+                "key": "backwall"
+            },
+            "x": 940,
+            "y": 131,
+            "width": 200,
+            "height": 2000
         },
         {
             "type": "Image",
@@ -104,6 +116,18 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "Image",
+            "id": "8b382fa3-84ce-4a81-932f-5aa2e1b88c01",
+            "label": "dropZone",
+            "texture": {
+                "key": "dropZone"
+            },
+            "x": 940,
+            "y": 923,
+            "scaleX": 0.3958668711377852,
+            "scaleY": 0.3958668711377852
         },
         {
             "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
@@ -345,21 +369,6 @@
             "scaleY": 0.6225647197887229
         },
         {
-            "prefabId": "adb2fc71-0b24-47de-9b60-ab9674980afd",
-            "id": "0b201c99-40a9-4a3f-a266-5930a7a7b723",
-            "unlock": [
-                "x",
-                "y",
-                "scaleX",
-                "scaleY"
-            ],
-            "label": "robot_1",
-            "x": 446,
-            "y": 185,
-            "scaleX": 0.6136006445175658,
-            "scaleY": 0.6136006445175658
-        },
-        {
             "type": "Image",
             "id": "73d72974-9d65-4179-ad6d-e35af87b7ea1",
             "label": "leveler1",
@@ -414,6 +423,19 @@
             "alphaTopRight": 0,
             "alphaBottomLeft": 0,
             "alphaBottomRight": 0
+        },
+        {
+            "type": "Image",
+            "id": "9e8d2aaf-7ca8-485c-b014-901fb71f054d",
+            "label": "buyBtn",
+            "scope": "CLASS",
+            "texture": {
+                "key": "buyBtn"
+            },
+            "x": 679,
+            "y": 430,
+            "scaleX": 0.5295961130642699,
+            "scaleY": 0.5295961130642699
         }
     ],
     "plainObjects": [],

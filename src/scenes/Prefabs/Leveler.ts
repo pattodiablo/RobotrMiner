@@ -56,13 +56,17 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		});
 
 		// add body_3 to this
-		AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body_3 });
-		b2Body_SetType(body_3, b2BodyType.b2_kinematicBody);
+	
 
 		// shape_4
+		
+
+		/* START-USER-CTR-CODE */
+			AddSpriteToWorld((this.scene as any).worldId, this, { bodyId: body_3 });
+		b2Body_SetType(body_3, b2BodyType.b2_kinematicBody);
 		const shape_4 = b2CreatePolygonShape(body_3, { 
 			...b2DefaultShapeDef()
-		}, b2MakeBox(pxm(114.5), pxm(38)));
+		}, b2MakeBox(pxm(114.5), pxm(30)));
 		const levelerFilter = b2DefaultFilter();
 		levelerFilter.categoryBits = 0x0010;
 		levelerFilter.maskBits = 0xffff & ~0x0008;
@@ -73,10 +77,9 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		this.startY = b2Body_GetPosition(body_3).y;
 
 		this.scene.events.on("update", this.handleSceneUpdate, this);
+		this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleDestroy, this);
+		this.scene.events.once(Phaser.Scenes.Events.DESTROY, this.handleDestroy, this);
 		this.once(Phaser.GameObjects.Events.DESTROY, this.handleDestroy, this);
-
-		/* START-USER-CTR-CODE */
-		// Write your code here.
 		/* END-USER-CTR-CODE */
 	}
 
@@ -87,8 +90,8 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private shapeId!: any;
 	private routePoints: Array<{ x: number; y: number }> = [];
 	private routeIndex = 0;
-	private readonly baseTravelSpeed = pxm(92);
-	private readonly minTravelSpeed = pxm(52);
+	private readonly baseTravelSpeed = pxm(118);
+	private readonly minTravelSpeed = pxm(68);
 	private readonly snapThreshold = pxm(0.58);
 	private readonly routeSnapThreshold = pxm(8);
 	private readonly targetY = 15;
@@ -96,6 +99,7 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private startX!: number;
 	private startY!: number;
 	private movementPhase = 0;
+	private sceneListenersRemoved = false;
 
 	setRoutePoints(points: Array<{ x: number; y: number }>) {
 		this.routePoints = points.filter((point) => point !== null && point !== undefined).map((point) => ({
@@ -109,11 +113,12 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		const scene = this.scene as any;
 		const reactorEnergy = Phaser.Math.Clamp(Number(scene.reactorEnergy ?? 100), 0, 100);
 		const energyFactor = Phaser.Math.Linear(0.7, 1.25, reactorEnergy / 100);
-		return Math.max(this.minTravelSpeed, this.baseTravelSpeed * energyFactor);
+		const speedMultiplier = Math.max(1, Number(scene.levelerSpeedMultiplier ?? 1));
+		return Math.max(this.minTravelSpeed, this.baseTravelSpeed * energyFactor) * speedMultiplier;
 	}
 
 	private handleSceneUpdate(_time: number, delta: number) {
-		if (!this.bodyId) {
+		if (!this.bodyId || !this.scene || !(this.scene as any).worldId) {
 			return;
 		}
 
@@ -222,7 +227,21 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	}
 
 	private handleDestroy() {
-		this.scene.events.off("update", this.handleSceneUpdate, this);
+		this.removeSceneListeners();
+		this.bodyId = undefined;
+		this.shapeId = undefined;
+	}
+
+	private removeSceneListeners() {
+		if (this.sceneListenersRemoved) {
+			return;
+		}
+
+		this.sceneListenersRemoved = true;
+		const currentScene = this.scene;
+		currentScene?.events.off("update", this.handleSceneUpdate, this);
+		currentScene?.events.off(Phaser.Scenes.Events.SHUTDOWN, this.handleDestroy, this);
+		currentScene?.events.off(Phaser.Scenes.Events.DESTROY, this.handleDestroy, this);
 	}
 
 	/* END-USER-CODE */

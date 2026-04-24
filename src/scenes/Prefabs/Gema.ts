@@ -173,13 +173,12 @@ export default class Gema extends Phaser.GameObjects.Image {
 
 		this.ovened = true;
 		this.setTint(0xc78a3f);
-		this.setAlpha(0.9);
+		this.setAlpha(1);
 		this.setBlendMode(Phaser.BlendModes.NORMAL);
 
 		this.ovenPulseTween?.remove();
 		this.ovenPulseTween = this.scene.tweens.add({
 			targets: this,
-			alpha: { from: 0.9, to: 1 },
 			scaleX: { from: this.scaleX, to: this.scaleX * 1.05 },
 			scaleY: { from: this.scaleY, to: this.scaleY * 1.05 },
 			angle: { from: -1.2, to: 1.2 },
@@ -305,6 +304,10 @@ export default class Gema extends Phaser.GameObjects.Image {
 		this.collisionsDisabled = false;
 	}
 
+	private canUsePhysicsBody() {
+		return !this.destroyed && !!this.bodyId && !!this.scene && !!(this.scene as any).worldId;
+	}
+
 	beginMergeAttraction(targetX: number, targetY: number, durationMs = 220) {
 		if (this.destroyed || this.merging || this.consuming) {
 			return;
@@ -336,6 +339,11 @@ export default class Gema extends Phaser.GameObjects.Image {
 				const pulseScale = 1 + Math.sin(progress * Math.PI) * 0.12;
 				this.setPosition(nextX, nextY);
 				this.setScale(startScaleX * pulseScale, startScaleY * pulseScale);
+				if (!this.canUsePhysicsBody()) {
+					this.mergeTween?.remove();
+					this.mergeTween = undefined;
+					return;
+				}
 				b2Body_SetTransform(this.bodyId, new b2Vec2(pxm(nextX), -pxm(nextY)), b2MakeRot(0));
 				b2Body_SetAwake(this.bodyId, true);
 			},
@@ -400,7 +408,7 @@ export default class Gema extends Phaser.GameObjects.Image {
 		this.reservedByRobotBodyId = null;
 		this.merging = false;
 		this.setDepth(0);
-		this.setAlpha(this.ovened ? 0.9 : 1);
+		this.setAlpha(1);
 		this.setCollisionsEnabled(true);
 		b2Body_SetType(this.bodyId, this.dynamicBodyType);
 		b2Body_SetAwake(this.bodyId, true);
@@ -451,6 +459,9 @@ export default class Gema extends Phaser.GameObjects.Image {
 			duration: 180,
 			ease: "Cubic.easeIn",
 			onUpdate: () => {
+				if (!this.canUsePhysicsBody()) {
+					return;
+				}
 				b2Body_SetTransform(this.bodyId, new b2Vec2(pxm(startX), -pxm(startY)), b2MakeRot(0));
 				b2Body_SetAwake(this.bodyId, true);
 			},

@@ -28,6 +28,11 @@
                 "key": "background"
             },
             {
+                "url": "assets/images/backwall.png",
+                "type": "image",
+                "key": "backwall"
+            },
+            {
                 "url": [
                     "assets/audios/bgMusic.mp3"
                 ],
@@ -54,6 +59,11 @@
                 ],
                 "type": "audio",
                 "key": "break3"
+            },
+            {
+                "url": "assets/images/buyBtn.png",
+                "type": "image",
+                "key": "buyBtn"
             },
             {
                 "url": [
@@ -117,6 +127,11 @@
                 "url": "assets/images/degradadoOven.png",
                 "type": "image",
                 "key": "degradadoOven"
+            },
+            {
+                "url": "assets/images/dropZone.png",
+                "type": "image",
+                "key": "dropZone"
             },
             {
                 "url": "assets/images/gem1.png",

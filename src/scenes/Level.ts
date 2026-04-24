@@ -78,9 +78,9 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 
 		// background
-		const background = this.add.image(-224, -1120, "background");
-		background.scaleX = 1.4447549335068692;
-		background.scaleY = 1.3284569248044262;
+		const background = this.add.image(-224, -1449, "background");
+		background.scaleX = 1.2867719056217648;
+		background.scaleY = 1.2867719056217648;
 		background.setOrigin(0, 0);
 
 		// pared1
@@ -94,6 +94,9 @@ export default class Level extends Phaser.Scene {
 			...b2DefaultShapeDef(), 
 			restitution: 0.5
 		}, b2MakeBox(pxm(100), pxm(600)));
+
+		// tilesprite_1
+		this.add.tileSprite(940, 131, 200, 2000, "backwall");
 
 		// levelBase
 		const levelBase = this.add.image(272, 435, "levelBase");
@@ -128,6 +131,11 @@ export default class Level extends Phaser.Scene {
 		const shape_3 = b2CreatePolygonShape(body_2, { 
 			...b2DefaultShapeDef()
 		}, b2MakeBox(pxm(570.5), pxm(60)));
+
+		// dropZone
+		const dropZone = this.add.image(940, 923, "dropZone");
+		dropZone.scaleX = 0.3958668711377852;
+		dropZone.scaleY = 0.3958668711377852;
 
 		// robot
 		const robot = new Robot(this, this.spine, 160, 192);
@@ -236,12 +244,6 @@ export default class Level extends Phaser.Scene {
 		hudAlert.scaleX = 9.164778234247432;
 		hudAlert.scaleY = 0.6225647197887229;
 
-		// robot_1
-		const robot_1 = new Robot(this, this.spine, 446, 185);
-		this.add.existing(robot_1);
-		robot_1.scaleX = 0.6136006445175658;
-		robot_1.scaleY = 0.6136006445175658;
-
 		// leveler1
 		const leveler1 = this.add.image(937, 1168, "_MISSING");
 		leveler1.alpha = 0;
@@ -274,6 +276,11 @@ export default class Level extends Phaser.Scene {
 		leveler4.alphaBottomLeft = 0;
 		leveler4.alphaBottomRight = 0;
 
+		// buyBtn
+		const buyBtn = this.add.image(679, 430, "buyBtn");
+		buyBtn.scaleX = 0.5295961130642699;
+		buyBtn.scaleY = 0.5295961130642699;
+
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
 		this.body_2 = body_2;
@@ -295,6 +302,7 @@ export default class Level extends Phaser.Scene {
 		this.leveler2 = leveler2;
 		this.leveler3 = leveler3;
 		this.leveler4 = leveler4;
+		this.buyBtn = buyBtn;
 
 		this.events.emit("scene-awake");
 	}
@@ -326,6 +334,7 @@ export default class Level extends Phaser.Scene {
 	private leveler2!: Phaser.GameObjects.Image;
 	private leveler3!: Phaser.GameObjects.Image;
 	private leveler4!: Phaser.GameObjects.Image;
+	private buyBtn!: Phaser.GameObjects.Image;
 	public worldId!: b2WorldId;
 
 	/* START-USER-CODE */
@@ -339,10 +348,20 @@ export default class Level extends Phaser.Scene {
 	private moneyDisplayValue = 0;
 	private moneyText!: Phaser.GameObjects.Text;
 	private moneyTween?: Phaser.Tweens.Tween;
+	private buyPanelElements: Array<Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text> = [];
+	private buyPanelOverlay?: Phaser.GameObjects.Rectangle;
+	private buyPanelBackground?: Phaser.GameObjects.Rectangle;
+	private buyPanelTitle?: Phaser.GameObjects.Text;
+	private buyPanelBody?: Phaser.GameObjects.Text;
+	private buyPanelMoneyText?: Phaser.GameObjects.Text;
+	private buyPanelCloseButton?: Phaser.GameObjects.Text;
+	private buyOptionButtons = new Map<string, Phaser.GameObjects.Text>();
 	private reactorEnergy = 100;
 	private reactorEnergyText!: Phaser.GameObjects.Text;
 	private reactorEnergyBarBg!: Phaser.GameObjects.Rectangle;
 	private reactorEnergyBarFill!: Phaser.GameObjects.Rectangle;
+	private fuseLicenseWarningText?: Phaser.GameObjects.Text;
+	private fuseLicenseWarningTimer?: Phaser.Time.TimerEvent;
 	private energyDemandLabel!: Phaser.GameObjects.Text;
 	private energyDemandLights!: Phaser.GameObjects.Ellipse[];
 	private energyDemandPressure = 0;
@@ -364,8 +383,8 @@ export default class Level extends Phaser.Scene {
 	private readonly maxVisibleRocks = 20;
 	private readonly levelerSpawnX = 960;
 	private readonly levelerSpawnY = 1312;
-	private readonly levelerSpawnInterval = 10000;
-	private readonly maxLevelerInstances = 12;
+	private readonly initialLevelerCount = 3;
+	private readonly purchasableLevelerCount = 3;
 	private readonly levelerSpawnSpacingX = 220;
 	private readonly levelerSpawnSpacingY = 72;
 	private debugCanvas: HTMLCanvasElement | null = null;
@@ -412,6 +431,40 @@ export default class Level extends Phaser.Scene {
 	private pointerMinedRockCount = 0;
 	private lowEnergyAlarmActive = false;
 	private gameOverTriggered = false;
+	private buyPanelOpen = false;
+	private readonly buyUpgradeOptions = [
+		{ id: "scout-bot", name: "Scout Bot", price: 250, detail: "Collects loose gems faster.", available: true },
+		{ id: "leveler-slot", name: "Leveler Slot", price: 180, detail: "Adds one more active leveler. Max 3 extra.", available: true },
+		{ id: "leveler-boost", name: "Leveler Boost", price: 140, detail: "Raises all leveler speed by 18%.", available: true },
+		{ id: "fusion-tier-2", name: "Fusion License II", price: 220, detail: "Unlocks gem merges up to level 9.", available: true },
+		{ id: "fusion-tier-3", name: "Fusion License III", price: 420, detail: "Unlocks gem merges up to level 13.", available: true },
+		{ id: "smelter-bot", name: "Smelter Bot", price: 1300, detail: "Boosts cooked gem value.", available: false },
+	];
+	private readonly purchasedRobotSpawnPoints = [
+		{ x: 226, y: 192 },
+		{ x: 306, y: 192 },
+		{ x: 386, y: 192 },
+		{ x: 466, y: 192 },
+		{ x: 546, y: 192 },
+		{ x: 626, y: 192 },
+	];
+	private purchasedRobotCount = 0;
+	private readonly scoutBotMaxPurchases = 4;
+	private levelerSlotPurchaseCount = 0;
+	public levelerSpeedMultiplier = 1;
+	private readonly levelerSpeedUpgradeStep = 0.18;
+	private readonly levelerBoostMaxPurchases = 3;
+	private levelerBoostPurchaseCount = 0;
+	private readonly baseFusionGemLevelCap = 4;
+	private readonly fusionTierTwoGemLevelCap = 9;
+	private readonly fusionTierThreeGemLevelCap = 13;
+	private fusionGemLevelCap = this.baseFusionGemLevelCap;
+	private readonly buyButtonEnabledColor = "#6a3112";
+	private readonly buyButtonDisabledColor = "#494949";
+	private readonly hiddenMoneyCode = "magicmoney";
+	private readonly fuseLicenseWarningCooldownMs = 850;
+	private hiddenMoneyCodeBuffer = "";
+	private lastFuseLicenseWarningAt = -Infinity;
 	private createLevelBounds() {
 		const b2body = b2CreateBody(this.worldId, {
 			...b2DefaultBodyDef(),
@@ -458,11 +511,13 @@ export default class Level extends Phaser.Scene {
 		this.setupReturnButton();
 		this.setupCheckButton();
 		this.setupReturnButton2();
+		this.setupBuyButton();
 		this.scheduleLevelerSpawns();
 		this.setupBox2DDebug();
 		this.setupClearRocksButton();
 		this.createMoneyHud();
 		this.createReactorHud();
+		this.createBuyPanel();
 		this.setupAmbienceSounds();
 		const bgMusic = this.sound.get("bgMusic");
 		if (!bgMusic || !bgMusic.isPlaying) {
@@ -481,6 +536,7 @@ export default class Level extends Phaser.Scene {
 		this.events.once(Phaser.Scenes.Events.DESTROY, this.handleSceneShutdown, this);
 		this.input.on("pointermove", this.handlePointerMove, this);
 		this.input.on("pointerup", this.handlePointerUp, this);
+		this.input.keyboard?.on("keydown", this.handleHiddenMoneyCodeKeydown, this);
 		this.scheduleNextRockSpawn();
 		this.debugToggleKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3);
 		this.levelBaseInitialX = this.levelBase.x;
@@ -494,6 +550,10 @@ export default class Level extends Phaser.Scene {
 	update(_time: number, delta: number) {
 		if (Phaser.Input.Keyboard.JustDown(this.debugToggleKey)) {
 			this.setBox2DDebugEnabled(!this.debugEnabled);
+		}
+
+		if (this.buyPanelOpen) {
+			return;
 		}
 
 		this.updateCarriedGem();
@@ -569,11 +629,11 @@ export default class Level extends Phaser.Scene {
 		this.bloomEffect?.parallelFilters.destroy();
 		const bloomEffects = Phaser.Actions.AddEffectBloom(this.cameras.main, {
 			threshold: 0.2,
-			blurRadius: 0.1,
+			blurRadius: 0.2,
 			blurSteps: 1,
 			blurQuality: 2,
 			blendAmount: 0.85,
-			blendMode: Phaser.BlendModes.SCREEN,
+			blendMode: Phaser.BlendModes.DESTINATION_ATOP,
 		});
 		this.bloomEffect = bloomEffects[0];
 	}
@@ -693,26 +753,17 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private scheduleLevelerSpawns() {
-		this.levelerSpawnTimer?.remove(false);
-		this.levelerSpawnTimer = this.time.addEvent({
-			delay: this.levelerSpawnInterval,
-			loop: true,
-			callback: () => {
-				if (this.levelerInstanceCount >= this.maxLevelerInstances) {
-					this.levelerSpawnTimer?.remove(false);
-					this.levelerSpawnTimer = undefined;
-					return;
-				}
+		const targetLevelerCount = this.initialLevelerCount + this.levelerSlotPurchaseCount;
 
-				const spawnIndex = this.levelerInstanceCount;
-				const spawnOffsetX = (spawnIndex % 3) * this.levelerSpawnSpacingX;
-				const spawnOffsetY = Math.floor(spawnIndex / 3) * this.levelerSpawnSpacingY;
-				const leveler = new Leveler(this, this.levelerSpawnX + spawnOffsetX, this.levelerSpawnY + spawnOffsetY);
-				this.add.existing(leveler);
-				leveler.setRoutePoints(this.getLevelerRoutePoints());
-				this.levelerInstanceCount += 1;
-			},
-		});
+		while (this.levelerInstanceCount < targetLevelerCount) {
+			const spawnIndex = this.levelerInstanceCount;
+			const spawnOffsetX = (spawnIndex % 3) * this.levelerSpawnSpacingX;
+			const spawnOffsetY = Math.floor(spawnIndex / 3) * this.levelerSpawnSpacingY;
+			const leveler = new Leveler(this, this.levelerSpawnX + spawnOffsetX, this.levelerSpawnY + spawnOffsetY);
+			this.add.existing(leveler);
+			leveler.setRoutePoints(this.getLevelerRoutePoints());
+			this.levelerInstanceCount += 1;
+		}
 	}
 
 	private getPrimaryLeveler() {
@@ -820,6 +871,20 @@ export default class Level extends Phaser.Scene {
 		this.moneyText.setOrigin(1, 0);
 		this.moneyText.setScrollFactor(0);
 		this.moneyText.setDepth(2000);
+
+		this.fuseLicenseWarningText = this.add.text(this.scale.width * 0.5, 28, "Need license to fuse", {
+			fontFamily: "arial",
+			fontSize: "24px",
+			color: "#fff1bd",
+			stroke: "#6b140f",
+			strokeThickness: 6,
+			align: "center",
+		});
+		this.fuseLicenseWarningText.setOrigin(0.5, 0);
+		this.fuseLicenseWarningText.setScrollFactor(0);
+		this.fuseLicenseWarningText.setDepth(4100);
+		this.fuseLicenseWarningText.setVisible(false);
+		this.fuseLicenseWarningText.setAlpha(0);
 	}
 
 	public collectCoinReward(amount: number) {
@@ -829,6 +894,18 @@ export default class Level extends Phaser.Scene {
 
 		this.moneyValue += amount;
 		this.animateMoneyHud();
+		this.updateBuyPanelAffordability();
+	}
+
+	private spendMoney(amount: number) {
+		if (amount <= 0 || this.moneyValue < amount) {
+			return false;
+		}
+
+		this.moneyValue -= amount;
+		this.animateMoneyHud();
+		this.updateBuyPanelAffordability();
+		return true;
 	}
 
 	private animateMoneyHud() {
@@ -847,11 +924,13 @@ export default class Level extends Phaser.Scene {
 				const nextValue = Math.round(Number(tween.getValue() ?? 0));
 				this.moneyDisplayValue = nextValue;
 				this.moneyText.setText(this.formatMoneyValue(nextValue));
+				this.buyPanelMoneyText?.setText(`AVAILABLE: $${this.formatMoneyValue(nextValue)}`);
 				this.moneyText.setScale(1.02);
 			},
 			onComplete: () => {
 				this.moneyDisplayValue = targetValue;
 				this.moneyText.setText(this.formatMoneyValue(targetValue));
+				this.buyPanelMoneyText?.setText(`AVAILABLE: $${this.formatMoneyValue(targetValue)}`);
 				this.moneyText.setScale(1);
 			},
 		});
@@ -882,8 +961,8 @@ export default class Level extends Phaser.Scene {
 			fontFamily: "arial",
 			fontSize: "12px",
 			color: "#ffffff",
-		
-		
+
+
 			align: "left",
 		});
 		this.reactorEnergyText.setScrollFactor(0);
@@ -904,7 +983,7 @@ export default class Level extends Phaser.Scene {
 			fontFamily: "arial",
 			fontSize: "12px",
 			color: "#ffffff",
-			
+
 			align: "left",
 		});
 		this.energyDemandLabel.setScrollFactor(0);
@@ -927,7 +1006,8 @@ export default class Level extends Phaser.Scene {
 
 	public addReactorEnergy(gemValue: number) {
 		const wasDepleted = this.reactorEnergy <= 0;
-		const energyGain = Math.max(2, Math.round(gemValue / 5));
+		const demandChargeMultiplier = this.getReactorChargeMultiplier();
+		const energyGain = Math.max(1, Math.round((gemValue / 5) * demandChargeMultiplier));
 		this.reactorEnergy = Math.min(100, this.reactorEnergy + energyGain);
 		if (wasDepleted && this.reactorEnergy > 0) {
 			this.sound.play("coreRestart", {
@@ -990,6 +1070,19 @@ export default class Level extends Phaser.Scene {
 		}
 
 		return 3.4;
+	}
+
+	private getReactorChargeMultiplier() {
+		const level = this.getEnergyDemandLevel();
+		if (level === 0) {
+			return 1;
+		}
+
+		if (level === 1) {
+			return 0.68;
+		}
+
+		return 0.42;
 	}
 
 	private updateReactorHud() {
@@ -1152,10 +1245,79 @@ export default class Level extends Phaser.Scene {
 	}
 
 	private handleSceneShutdown() {
+		if (this.buyPanelOpen) {
+			this.closeBuyPanel();
+		}
+		this.input.keyboard?.off("keydown", this.handleHiddenMoneyCodeKeydown, this);
+		this.fuseLicenseWarningTimer?.remove(false);
+		this.fuseLicenseWarningTimer = undefined;
 		this.miningButtonHintTimer?.remove(false);
 		this.miningButtonHintTimer = undefined;
 		this.cancelScheduledGameOver();
 		this.events.off("rock-pointer-mined", this.handlePointerMinedRock, this);
+	}
+
+	private showFuseLicenseWarning() {
+		if (!this.fuseLicenseWarningText) {
+			return;
+		}
+
+		const now = this.time.now;
+		if (now - this.lastFuseLicenseWarningAt < this.fuseLicenseWarningCooldownMs) {
+			return;
+		}
+
+		this.lastFuseLicenseWarningAt = now;
+		this.sound.play("break2", {
+			volume: 0.45,
+			loop: false,
+		});
+
+		this.fuseLicenseWarningTimer?.remove(false);
+		this.tweens.killTweensOf(this.fuseLicenseWarningText);
+		this.fuseLicenseWarningText.setText("Need license to fuse");
+		this.fuseLicenseWarningText.setVisible(true);
+		this.fuseLicenseWarningText.setAlpha(1);
+		this.fuseLicenseWarningText.setY(28);
+
+		this.fuseLicenseWarningTimer = this.time.delayedCall(1050, () => {
+			this.tweens.add({
+				targets: this.fuseLicenseWarningText,
+				alpha: 0,
+				y: 12,
+				duration: 220,
+				ease: "Sine.easeOut",
+				onComplete: () => {
+					this.fuseLicenseWarningText?.setVisible(false);
+					this.fuseLicenseWarningText?.setY(28);
+				},
+			});
+			this.fuseLicenseWarningTimer = undefined;
+		});
+	}
+
+	private handleHiddenMoneyCodeKeydown(event: KeyboardEvent) {
+		const key = event.key?.toLowerCase();
+		if (!key) {
+			return;
+		}
+
+		if (key === "backspace" || key === "escape") {
+			this.hiddenMoneyCodeBuffer = "";
+			return;
+		}
+
+		if (key.length !== 1 || key < "a" || key > "z") {
+			return;
+		}
+
+		this.hiddenMoneyCodeBuffer = `${this.hiddenMoneyCodeBuffer}${key}`.slice(-this.hiddenMoneyCode.length);
+		if (this.hiddenMoneyCodeBuffer !== this.hiddenMoneyCode) {
+			return;
+		}
+
+		this.hiddenMoneyCodeBuffer = "";
+		this.collectCoinReward(1000000);
 	}
 
 	private setupProcessButton() {
@@ -1195,6 +1357,312 @@ export default class Level extends Phaser.Scene {
 			this.playButtonPressEffect(this.miningBtn);
 			this.handleMiningButtonPress();
 		});
+	}
+
+	private setupBuyButton() {
+		this.buyBtn.setScrollFactor(0);
+		this.buyBtn.setInteractive({ useHandCursor: true });
+		this.buyBtn.setDepth(2000);
+		this.registerButtonBaseScale(this.buyBtn);
+		this.buyBtn.on("pointerdown", () => {
+			this.playButtonPressEffect(this.buyBtn);
+			this.openBuyPanel();
+		});
+	}
+
+	private createBuyPanel() {
+		const centerX = this.scale.width * 0.5;
+		const centerY = this.scale.height * 0.5;
+		const panelDepth = 4200;
+		const panelWidth = this.scale.width - 72;
+		const panelHeight = this.scale.height - 52;
+		const panelTop = centerY - panelHeight * 0.5;
+
+		this.buyPanelOverlay = this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x050505, 0.72);
+		this.buyPanelOverlay.setScrollFactor(0);
+		this.buyPanelOverlay.setDepth(panelDepth);
+		this.buyPanelOverlay.setVisible(false);
+		this.buyPanelOverlay.setInteractive();
+		this.buyPanelElements.push(this.buyPanelOverlay);
+
+		this.buyPanelBackground = this.add.rectangle(centerX, centerY, panelWidth, panelHeight, 0x1a1205, 0.96);
+		this.buyPanelBackground.setScrollFactor(0);
+		this.buyPanelBackground.setDepth(panelDepth + 1);
+		this.buyPanelBackground.setStrokeStyle(4, 0xe0c37a, 1);
+		this.buyPanelBackground.setVisible(false);
+		this.buyPanelElements.push(this.buyPanelBackground);
+
+		this.buyPanelMoneyText = this.add.text(centerX - panelWidth * 0.5 + 42, panelTop + 54, `AVAILABLE: $${this.formatMoneyValue(this.moneyDisplayValue)}`, {
+			fontFamily: "Courier New, monospace",
+			fontSize: "22px",
+			color: "#f2c14e",
+			align: "left",
+		});
+		this.buyPanelMoneyText.setOrigin(0, 0.5);
+		this.buyPanelMoneyText.setScrollFactor(0);
+		this.buyPanelMoneyText.setDepth(panelDepth + 2);
+		this.buyPanelMoneyText.setVisible(false);
+		this.buyPanelElements.push(this.buyPanelMoneyText);
+
+		this.buyPanelCloseButton = this.add.text(centerX + panelWidth * 0.5 - 92, panelTop + 54, "CLOSE", {
+			fontFamily: "Courier New, monospace",
+			fontSize: "22px",
+			color: "#fff1bd",
+			backgroundColor: "#7c251f",
+			padding: { left: 18, right: 18, top: 9, bottom: 9 },
+			align: "center",
+		});
+		this.buyPanelCloseButton.setOrigin(0.5);
+		this.buyPanelCloseButton.setScrollFactor(0);
+		this.buyPanelCloseButton.setDepth(panelDepth + 3);
+		this.buyPanelCloseButton.setVisible(false);
+		this.buyPanelCloseButton.setInteractive({ useHandCursor: true });
+		this.buyPanelCloseButton.on("pointerdown", () => {
+			this.closeBuyPanel();
+		});
+		this.buyPanelElements.push(this.buyPanelCloseButton);
+
+		this.createBuyUpgradeCards(centerX, panelTop, panelWidth, panelDepth);
+	}
+
+	private createBuyUpgradeCards(centerX: number, panelTop: number, panelWidth: number, panelDepth: number) {
+		const columns = 3;
+		const horizontalPadding = 44;
+		const gap = 18;
+		const cardWidth = (panelWidth - horizontalPadding * 2 - gap * (columns - 1)) / columns;
+		const cardHeight = 148;
+		const startX = centerX - panelWidth * 0.5 + horizontalPadding + cardWidth * 0.5;
+		const startY = panelTop + 198;
+
+		for (let index = 0; index < this.buyUpgradeOptions.length; index += 1) {
+			const option = this.buyUpgradeOptions[index];
+			const column = index % columns;
+			const row = Math.floor(index / columns);
+			const cardX = startX + column * (cardWidth + gap);
+			const cardY = startY + row * (cardHeight + gap);
+
+			const cardBg = this.add.rectangle(cardX, cardY, cardWidth, cardHeight, 0x2a1e10, 0.98);
+			cardBg.setScrollFactor(0);
+			cardBg.setDepth(panelDepth + 2);
+			cardBg.setStrokeStyle(3, 0xb88d3c, 1);
+			cardBg.setVisible(false);
+			this.buyPanelElements.push(cardBg);
+
+			const cardTop = cardY - cardHeight * 0.5;
+			const cardLeft = cardX - cardWidth * 0.5 + 18;
+
+			const cardTitle = this.add.text(cardLeft, cardTop + 16, option.name, {
+				fontFamily: "Courier New, monospace",
+				fontSize: "22px",
+				color: "#fff1bd",
+				align: "left",
+				wordWrap: { width: cardWidth - 36, useAdvancedWrap: true },
+			});
+			cardTitle.setOrigin(0, 0);
+			cardTitle.setScrollFactor(0);
+			cardTitle.setDepth(panelDepth + 3);
+			cardTitle.setVisible(false);
+			this.buyPanelElements.push(cardTitle);
+
+			const cardPrice = this.add.text(cardLeft, cardTop + 48, `$${option.price}`, {
+				fontFamily: "Courier New, monospace",
+				fontSize: "20px",
+				color: "#f2c14e",
+				align: "left",
+			});
+			cardPrice.setOrigin(0, 0);
+			cardPrice.setScrollFactor(0);
+			cardPrice.setDepth(panelDepth + 3);
+			cardPrice.setVisible(false);
+			this.buyPanelElements.push(cardPrice);
+
+			const cardDetail = this.add.text(cardLeft, cardTop + 78, option.detail, {
+				fontFamily: "Courier New, monospace",
+				fontSize: "16px",
+				color: "#efe5cc",
+				align: "left",
+				wordWrap: { width: cardWidth - 36, useAdvancedWrap: true },
+			});
+			cardDetail.setOrigin(0, 0);
+			cardDetail.setScrollFactor(0);
+			cardDetail.setDepth(panelDepth + 3);
+			cardDetail.setVisible(false);
+			this.buyPanelElements.push(cardDetail);
+
+			const buttonLabel = this.getBuyOptionButtonLabel(option.id, option.available);
+			const buyText = this.add.text(cardX, cardTop + cardHeight - 18, buttonLabel, {
+				fontFamily: "Courier New, monospace",
+				fontSize: "18px",
+				color: "#fff1bd",
+				backgroundColor: option.available ? this.buyButtonEnabledColor : this.buyButtonDisabledColor,
+				padding: { left: 14, right: 14, top: 7, bottom: 7 },
+				align: "center",
+			});
+			buyText.setOrigin(0.5, 1);
+			buyText.setScrollFactor(0);
+			buyText.setDepth(panelDepth + 3);
+			buyText.setVisible(false);
+			if (option.available) {
+				buyText.on("pointerdown", () => {
+					this.handleBuyUpgrade(option.id, option.price);
+				});
+				this.buyOptionButtons.set(option.id, buyText);
+			}
+			this.buyPanelElements.push(buyText);
+		}
+
+		this.updateBuyPanelAffordability();
+	}
+
+	private updateBuyPanelAffordability() {
+		this.buyPanelMoneyText?.setText(`AVAILABLE: $${this.formatMoneyValue(this.moneyDisplayValue)}`);
+
+		for (const option of this.buyUpgradeOptions) {
+			const button = this.buyOptionButtons.get(option.id);
+			if (!button) {
+				continue;
+			}
+
+			const isLocked = this.isBuyOptionLocked(option.id);
+			const isSoldOut = this.isBuyOptionSoldOut(option.id);
+			const canAfford = option.available && !isLocked && !isSoldOut && this.moneyValue >= option.price;
+			button.setText(this.getBuyOptionButtonLabel(option.id, option.available));
+			button.setBackgroundColor(canAfford ? this.buyButtonEnabledColor : this.buyButtonDisabledColor);
+			button.setAlpha(canAfford ? 1 : 0.6);
+
+			if (canAfford) {
+				button.setInteractive({ useHandCursor: true });
+			} else {
+				button.disableInteractive();
+			}
+		}
+	}
+
+	private isBuyOptionLocked(upgradeId: string) {
+		if (upgradeId === "fusion-tier-3") {
+			return this.fusionGemLevelCap < this.fusionTierTwoGemLevelCap;
+		}
+
+		return false;
+	}
+
+	private isBuyOptionSoldOut(upgradeId: string) {
+		if (upgradeId === "scout-bot") {
+			return this.purchasedRobotCount >= this.scoutBotMaxPurchases;
+		}
+
+		if (upgradeId === "leveler-slot") {
+			return this.levelerSlotPurchaseCount >= this.purchasableLevelerCount;
+		}
+
+		if (upgradeId === "leveler-boost") {
+			return this.levelerBoostPurchaseCount >= this.levelerBoostMaxPurchases;
+		}
+
+		if (upgradeId === "fusion-tier-2") {
+			return this.fusionGemLevelCap >= this.fusionTierTwoGemLevelCap;
+		}
+
+		if (upgradeId === "fusion-tier-3") {
+			return this.fusionGemLevelCap >= this.fusionTierThreeGemLevelCap;
+		}
+
+		return false;
+	}
+
+	private getBuyOptionButtonLabel(upgradeId: string, available: boolean) {
+		if (!available) {
+			return "COMING SOON";
+		}
+
+		if (this.isBuyOptionLocked(upgradeId)) {
+			return "LOCKED";
+		}
+
+		if (upgradeId === "scout-bot") {
+			return this.isBuyOptionSoldOut(upgradeId) ? "SOLD OUT" : "BUY ROBOT";
+		}
+
+		if (upgradeId === "leveler-slot") {
+			return this.isBuyOptionSoldOut(upgradeId) ? "MAXED" : "BUY LEVELER";
+		}
+
+		if (upgradeId === "fusion-tier-2" || upgradeId === "fusion-tier-3") {
+			return this.isBuyOptionSoldOut(upgradeId) ? "UNLOCKED" : "BUY UPGRADE";
+		}
+
+		if (upgradeId === "leveler-boost") {
+			return this.isBuyOptionSoldOut(upgradeId) ? "MAXED" : "BUY UPGRADE";
+		}
+
+		return "BUY";
+	}
+
+	private handleBuyUpgrade(upgradeId: string, price: number) {
+		if (this.isBuyOptionLocked(upgradeId) || this.isBuyOptionSoldOut(upgradeId)) {
+			return;
+		}
+
+		if (!this.spendMoney(price)) {
+			return;
+		}
+
+		if (upgradeId === "scout-bot") {
+			this.spawnPurchasedScoutBot();
+		} else if (upgradeId === "leveler-slot") {
+			this.levelerSlotPurchaseCount += 1;
+			this.scheduleLevelerSpawns();
+		} else if (upgradeId === "leveler-boost") {
+			this.levelerSpeedMultiplier += this.levelerSpeedUpgradeStep;
+			this.levelerBoostPurchaseCount += 1;
+		} else if (upgradeId === "fusion-tier-2") {
+			this.fusionGemLevelCap = this.fusionTierTwoGemLevelCap;
+		} else if (upgradeId === "fusion-tier-3") {
+			this.fusionGemLevelCap = this.fusionTierThreeGemLevelCap;
+		}
+
+		this.closeBuyPanel();
+	}
+
+	private spawnPurchasedScoutBot() {
+		const spawnPoint = this.purchasedRobotSpawnPoints[this.purchasedRobotCount % this.purchasedRobotSpawnPoints.length];
+		const row = Math.floor(this.purchasedRobotCount / this.purchasedRobotSpawnPoints.length);
+		const spawnX = spawnPoint.x;
+		const spawnY = spawnPoint.y + row * 72;
+		const robot = new Robot(this, this.spine, spawnX, spawnY);
+		this.add.existing(robot);
+		robot.scaleX = 0.6136006445175658;
+		robot.scaleY = 0.6136006445175658;
+		this.purchasedRobotCount += 1;
+	}
+
+	private openBuyPanel() {
+		if (this.buyPanelOpen || this.gameOverTriggered) {
+			return;
+		}
+
+		this.buyPanelOpen = true;
+		this.time.timeScale = 0;
+		this.updateBuyPanelAffordability();
+		for (const element of this.buyPanelElements) {
+			element.setVisible(true);
+		}
+		this.buyBtn.disableInteractive();
+	}
+
+	private closeBuyPanel() {
+		if (!this.buyPanelOpen) {
+			return;
+		}
+
+		this.buyPanelOpen = false;
+		this.time.timeScale = 1;
+		for (const element of this.buyPanelElements) {
+			element.setVisible(false);
+		}
+		if (!this.gameOverTriggered) {
+			this.buyBtn.setInteractive({ useHandCursor: true });
+		}
 	}
 
 	private setupClearRocksButton() {
@@ -1616,12 +2084,18 @@ export default class Level extends Phaser.Scene {
 	private mergeGems(gemA: Gema, gemB: Gema) {
 		const mergedX = (gemA.x + gemB.x) / 2;
 		const mergedY = (gemA.y + gemB.y) / 2;
+		const nextGemLevel = gemA.getBirthType() + 1;
 		const textureKey = gemA.getNextBirthTextureKey();
 		const mergeSoundKey = gemA.getBirthType() >= 8
 			? (Math.random() < 0.5 ? "PowerGem1" : "PowerGem2")
 			: "gemFusion";
 
 		if (!textureKey) {
+			return;
+		}
+
+		if (nextGemLevel > this.fusionGemLevelCap) {
+			this.showFuseLicenseWarning();
 			return;
 		}
 
