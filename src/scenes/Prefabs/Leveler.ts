@@ -89,7 +89,9 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private bodyId!: any;
 	private shapeId!: any;
 	private routePoints: Array<{ x: number; y: number }> = [];
-	private routeIndex = 0;
+	private routeSegmentLengths: number[] = [];
+	private routeLoopLength = 0;
+	private routeDistance = 0;
 	private readonly baseTravelSpeed = pxm(118);
 	private readonly minTravelSpeed = pxm(68);
 	private readonly snapThreshold = pxm(0.58);
@@ -101,12 +103,34 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	private movementPhase = 0;
 	private sceneListenersRemoved = false;
 
-	setRoutePoints(points: Array<{ x: number; y: number }>) {
+	setRoutePoints(points: Array<{ x: number; y: number }>, formationIndex = 0, formationCount = 1, referenceDistance = 0) {
 		this.routePoints = points.filter((point) => point !== null && point !== undefined).map((point) => ({
 			x: point.x,
 			y: point.y,
 		}));
-		this.routeIndex = 0;
+		this.routeSegmentLengths = [];
+		this.routeLoopLength = 0;
+
+		if (this.routePoints.length < 2) {
+			this.routeDistance = 0;
+			return;
+		}
+
+		for (let index = 0; index < this.routePoints.length; index += 1) {
+			const startPoint = this.routePoints[index];
+			const endPoint = this.routePoints[(index + 1) % this.routePoints.length];
+			const segmentLength = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+			this.routeSegmentLengths.push(segmentLength);
+			this.routeLoopLength += segmentLength;
+		}
+
+		const safeCount = Math.max(1, formationCount);
+		const formationOffset = this.routeLoopLength * (formationIndex / safeCount);
+		this.routeDistance = this.normalizeRouteDistance(referenceDistance + formationOffset);
+	}
+
+	getRouteDistance() {
+		return this.routeDistance;
 	}
 
 	private getTravelSpeed() {
@@ -184,11 +208,13 @@ export default class Leveler extends Phaser.GameObjects.Image {
 	}
 
 	private handleRouteMovement(delta: number, travelSpeed: number) {
-		const position = b2Body_GetPosition(this.bodyId);
-		const target = this.routePoints[this.routeIndex];
-		if (!target) {
+		if (this.routeLoopLength <= 0 || this.routePoints.length < 2) {
 			return;
 		}
+
+		this.routeDistance = this.normalizeRouteDistance(this.routeDistance + travelSpeed * (delta / 1000));
+		const position = b2Body_GetPosition(this.bodyId);
+		const target = this.getRoutePointAtDistance(this.routeDistance);
 
 		const deltaX = target.x - position.x;
 		const deltaY = target.y - position.y;
@@ -197,13 +223,47 @@ export default class Leveler extends Phaser.GameObjects.Image {
 		if (distance <= this.routeSnapThreshold) {
 			this.setBodyPosition(target.x, target.y);
 			this.setBodyVelocity(0, 0);
-			this.routeIndex = (this.routeIndex + 1) % this.routePoints.length;
 			return;
 		}
 
 		const velocityX = (deltaX / distance) * travelSpeed;
 		const velocityY = (deltaY / distance) * travelSpeed;
 		this.setBodyVelocity(velocityX, velocityY);
+	}
+
+	private normalizeRouteDistance(distance: number) {
+		if (this.routeLoopLength <= 0) {
+			return 0;
+		}
+
+		const normalizedDistance = distance % this.routeLoopLength;
+		return normalizedDistance < 0 ? normalizedDistance + this.routeLoopLength : normalizedDistance;
+	}
+
+	private getRoutePointAtDistance(distance: number) {
+		let remainingDistance = this.normalizeRouteDistance(distance);
+
+		for (let index = 0; index < this.routePoints.length; index += 1) {
+			const startPoint = this.routePoints[index];
+			const endPoint = this.routePoints[(index + 1) % this.routePoints.length];
+			const segmentLength = this.routeSegmentLengths[index] ?? 0;
+
+			if (segmentLength <= 0) {
+				continue;
+			}
+
+			if (remainingDistance <= segmentLength) {
+				const progress = remainingDistance / segmentLength;
+				return {
+					x: Phaser.Math.Linear(startPoint.x, endPoint.x, progress),
+					y: Phaser.Math.Linear(startPoint.y, endPoint.y, progress),
+				};
+			}
+
+			remainingDistance -= segmentLength;
+		}
+
+		return this.routePoints[0] ?? { x: this.startX, y: this.startY };
 	}
 
 	private setBodyPosition(x: number, y: number) {

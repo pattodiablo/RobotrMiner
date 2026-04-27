@@ -281,6 +281,23 @@ export default class Level extends Phaser.Scene {
 		buyBtn.scaleX = 0.5295961130642699;
 		buyBtn.scaleY = 0.5295961130642699;
 
+		// paredLateral2
+		const paredLateral2 = this.add.image(1066, -633, "paredLateral");
+
+		// body
+		const body = b2CreateBody(this.worldId, { 
+			...b2DefaultBodyDef(), 
+			position: pxmVec2(1066, 633)
+		});
+
+		// add body to paredLateral2
+		AddSpriteToWorld(this.worldId, paredLateral2, { bodyId: body });
+
+		// shape_2
+		const shape_2 = b2CreatePolygonShape(body, { 
+			...b2DefaultShapeDef()
+		}, b2MakeBox(pxm(39), pxm(360)));
+
 		this.body_1 = body_1;
 		this.levelBase = levelBase;
 		this.body_2 = body_2;
@@ -433,12 +450,12 @@ export default class Level extends Phaser.Scene {
 	private gameOverTriggered = false;
 	private buyPanelOpen = false;
 	private readonly buyUpgradeOptions = [
-		{ id: "scout-bot", name: "Scout Bot", price: 250, detail: "Collects loose gems faster.", available: true },
-		{ id: "leveler-slot", name: "Leveler Slot", price: 180, detail: "Adds one more active leveler. Max 3 extra.", available: true },
-		{ id: "leveler-boost", name: "Leveler Boost", price: 140, detail: "Raises all leveler speed by 18%.", available: true },
-		{ id: "fusion-tier-2", name: "Fusion License II", price: 220, detail: "Unlocks gem merges up to level 9.", available: true },
-		{ id: "fusion-tier-3", name: "Fusion License III", price: 420, detail: "Unlocks gem merges up to level 13.", available: true },
-		{ id: "smelter-bot", name: "Smelter Bot", price: 1300, detail: "Boosts cooked gem value.", available: false },
+		{ id: "scout-bot", name: "Scout Bot", price: 340, detail: "Collects loose gems faster.", available: true },
+		{ id: "leveler-slot", name: "Leveler Slot", price: 260, detail: "Adds one more active leveler. Max 3 extra.", available: true },
+		{ id: "leveler-boost", name: "Leveler Boost", price: 210, detail: "Raises all leveler speed by 18%.", available: true },
+		{ id: "fusion-tier-2", name: "Fusion License II", price: 320, detail: "Unlocks gem merges up to level 9.", available: true },
+		{ id: "fusion-tier-3", name: "Fusion License III", price: 560, detail: "Unlocks gem merges up to level 13.", available: true },
+		{ id: "smelter-bot", name: "Smelter Bot", price: 1600, detail: "Boosts cooked gem value.", available: false },
 	];
 	private readonly purchasedRobotSpawnPoints = [
 		{ x: 226, y: 192 },
@@ -499,7 +516,7 @@ export default class Level extends Phaser.Scene {
 		this.worldId = world.worldId;
 		this.editorCreate();
 		this.primaryLeveler = this.getPrimaryLeveler();
-		this.primaryLeveler?.setRoutePoints(this.getLevelerRoutePoints());
+		this.refreshLevelerRouteFormation();
 		this.console.setScrollFactor(0);
 		this.console.setDepth(1498);
 		this.createLevelBounds();
@@ -761,19 +778,45 @@ export default class Level extends Phaser.Scene {
 			const spawnOffsetY = Math.floor(spawnIndex / 3) * this.levelerSpawnSpacingY;
 			const leveler = new Leveler(this, this.levelerSpawnX + spawnOffsetX, this.levelerSpawnY + spawnOffsetY);
 			this.add.existing(leveler);
-			leveler.setRoutePoints(this.getLevelerRoutePoints());
 			this.levelerInstanceCount += 1;
 		}
+
+		this.refreshLevelerRouteFormation();
 	}
 
 	private getPrimaryLeveler() {
+		return this.getActiveLevelers()[0];
+	}
+
+	private getActiveLevelers() {
+		const levelers: Leveler[] = [];
+
 		for (const child of this.children.list) {
 			if (child instanceof Leveler) {
-				return child;
+				levelers.push(child);
 			}
 		}
 
-		return undefined;
+		return levelers;
+	}
+
+	private refreshLevelerRouteFormation() {
+		const activeLevelers = this.getActiveLevelers();
+		if (activeLevelers.length === 0) {
+			this.primaryLeveler = undefined;
+			this.levelerInstanceCount = 0;
+			return;
+		}
+
+		const routePoints = this.getLevelerRoutePoints();
+		const referenceDistance = activeLevelers[0]?.getRouteDistance?.() ?? 0;
+
+		for (let index = 0; index < activeLevelers.length; index += 1) {
+			activeLevelers[index].setRoutePoints(routePoints, index, activeLevelers.length, referenceDistance);
+		}
+
+		this.primaryLeveler = activeLevelers[0];
+		this.levelerInstanceCount = activeLevelers.length;
 	}
 
 	private getLevelerRoutePoints() {

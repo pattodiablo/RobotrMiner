@@ -2,6 +2,7 @@ import Phaser from "./phaser";
 import GameOver from "./scenes/GameOver";
 import Level from "./scenes/Level";
 import Preload from "./scenes/Preload";
+import Tutorial from "./scenes/Tutorial";
 import {
 	AddSpriteToWorld,
 	CreateWorld,
@@ -54,7 +55,7 @@ window.addEventListener('load', function () {
         default: 'box2d'
         
     },
-		scene: [Boot, Preload, Level, GameOver]
+		scene: [Boot, Preload, Tutorial, Level, GameOver]
 	});
 
 	game.scene.start("Boot");
